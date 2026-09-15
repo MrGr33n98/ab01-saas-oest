@@ -85,6 +85,18 @@ export type OperatorProfile = OperatorCardData & {
   portfolio_items?: any[];
   data_intent_config?: any;
   review_metrics?: any;
+  hero_banner_url?: string | null;
+  avatar_url?: string | null;
+  banner_headline?: string | null;
+  banner_subtitle?: string | null;
+  banner_badges?: string[] | null;
+  website_url?: string | null;
+  linkedin_url?: string | null;
+  instagram_url?: string | null;
+  anac_sisant_status?: string | null;
+  reta_insurance_status?: string | null;
+  mop_status?: string | null;
+  canac_pilots_count?: number | null;
 };
 
 type Envelope<T> = { data: T };

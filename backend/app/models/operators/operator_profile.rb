@@ -54,6 +54,18 @@ module Operators
       company? ? "/companies/#{slug}" : "/operators/#{slug}"
     end
 
+    def effective_banner_headline
+      banner_headline.presence || "Dados do mundo real. Decisões de alto impacto."
+    end
+
+    def effective_banner_subtitle
+      banner_subtitle.presence || "Mapeamento aéreo, LiDAR e inteligência geoespacial para infraestrutura, engenharia e grandes projetos."
+    end
+
+    def effective_banner_badges
+      banner_badges.presence || ["Todo o Brasil", "Alta Precisão", "Resultados Comprovados"]
+    end
+
     def recalculate_rating_metrics!
       approved_reviews = reviews.where(moderation_status: "published")
       count = approved_reviews.count

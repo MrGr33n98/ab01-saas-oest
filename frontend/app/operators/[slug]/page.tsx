@@ -102,7 +102,7 @@ export default async function OperatorProfilePage({
           <span className="text-text truncate font-medium">{name}</span>
         </nav>
 
-        {/* Dynamic Multi-Tab Showcase */}
+        {/* Dynamic Multi-Tab Showcase with Panoramic Hero Banner */}
         <OperatorProfileTabs
           operator={{
             slug: op.slug,
@@ -110,17 +110,30 @@ export default async function OperatorProfilePage({
             headline: op.headline,
             about: op.about,
             verification_status: op.verification_status,
-            city: op.organization?.city,
-            state_code: op.organization?.state_code,
+            city: op.organization?.city || (op as any).city,
+            state_code: op.organization?.state_code || (op as any).state_code,
             rating_average: op.rating_average,
             rating_count: op.rating_count,
             missions_completed: op.missions_completed,
             accepting_jobs: op.accepting_jobs,
+            hero_banner_url: (op as any).hero_banner_url,
+            avatar_url: (op as any).avatar_url,
+            banner_headline: (op as any).banner_headline,
+            banner_subtitle: (op as any).banner_subtitle,
+            banner_badges: (op as any).banner_badges,
+            website_url: (op as any).website_url,
+            linkedin_url: (op as any).linkedin_url,
+            instagram_url: (op as any).instagram_url,
+            anac_sisant_status: (op as any).anac_sisant_status,
+            reta_insurance_status: (op as any).reta_insurance_status,
+            mop_status: (op as any).mop_status,
+            canac_pilots_count: (op as any).canac_pilots_count,
+            data_intent_config: (op as any).data_intent_config,
             services: op.services,
             drones: op.drones,
             pilots: op.pilots,
-            portfolio_items: op.portfolio as any,
-            reviews: op.reviews as any,
+            portfolio_items: (op as any).portfolio_items || (op.portfolio as any),
+            reviews: (op as any).reviews as any,
           }}
         />
       </main>

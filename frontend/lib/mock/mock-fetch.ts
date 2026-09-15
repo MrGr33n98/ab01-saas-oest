@@ -150,6 +150,21 @@ export async function mockApiFetch<T = unknown>(path: string, options: RequestIn
     } as T;
   }
 
+  // --- OPERATOR PROFILE SETTINGS & CUSTOMIZATION ---
+  if (url === "/operator/profile") {
+    const op = MOCK_OPERATORS[0];
+    if (method === "PATCH" && options.body) {
+      try {
+        const body = JSON.parse(options.body as string);
+        Object.assign(op, body);
+        return { data: op } as T;
+      } catch {
+        return { data: op } as T;
+      }
+    }
+    return { data: op } as T;
+  }
+
   // --- OPERATOR DASHBOARD ---
   if (url === "/operator/portfolio") {
     return { data: MOCK_OPERATORS[0].portfolio_items } as T;
