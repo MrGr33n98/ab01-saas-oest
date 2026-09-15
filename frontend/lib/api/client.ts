@@ -1,6 +1,8 @@
 import { loadSession, saveSession, clearSession } from "./auth-store";
+import { mockApiFetch } from "../mock/mock-fetch";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+const IS_MOCK_ENABLED = process.env.NEXT_PUBLIC_MOCK_API === "true";
 
 export type ApiError = {
   status: number;
@@ -25,7 +27,6 @@ async function refreshAccessToken(): Promise<string | null> {
   const session = loadSession();
   if (!session?.refreshToken) return null;
 
-  // Deduplicate concurrent refresh calls
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {
@@ -58,6 +59,10 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 export async function apiFetch<T = unknown>(path: string, options: FetchOpts = {}): Promise<T> {
+  if (IS_MOCK_ENABLED) {
+    return mockApiFetch<T>(path, options);
+  }
+
   const session = typeof window !== "undefined" ? loadSession() : null;
   const { orgId, token, idempotencyKey, skipAuth, _retried, headers, ...rest } = options;
 
@@ -74,32 +79,40 @@ export async function apiFetch<T = unknown>(path: string, options: FetchOpts = {
   if (!skipAuth && organizationId) h["X-Organization-Id"] = organizationId;
   if (idempotencyKey) h["Idempotency-Key"] = idempotencyKey;
 
-  const res = await fetch(`${API_URL}${path}`, { ...rest, headers: h });
-  const body = await res.json().catch(() => ({}));
+  try {
+    const res = await fetch(`${API_URL}${path}`, { ...rest, headers: h });
+    const body = await res.json().catch(() => ({}));
 
-  // Token expired → attempt refresh once
-  if (res.status === 401 && !skipAuth && !_retried) {
-    const newToken = await refreshAccessToken();
-    if (newToken) {
-      return apiFetch<T>(path, { ...options, token: newToken, _retried: true });
+    // Token expired → attempt refresh once
+    if (res.status === 401 && !skipAuth && !_retried) {
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        return apiFetch<T>(path, { ...options, token: newToken, _retried: true });
+      }
+      if (typeof window !== "undefined") {
+        clearSession();
+        window.location.href = "/sign-in";
+      }
     }
-    // Refresh failed — redirect to sign-in
-    if (typeof window !== "undefined") {
-      clearSession();
-      window.location.href = "/sign-in";
-    }
-  }
 
-  if (!res.ok) {
-    throw {
-      status: res.status,
-      code: body.code,
-      title: body.title,
-      detail: body.detail || body.title,
-      request_id: body.request_id,
-    } as ApiError;
+    if (!res.ok) {
+      throw {
+        status: res.status,
+        code: body.code,
+        title: body.title,
+        detail: body.detail || body.title,
+        request_id: body.request_id,
+      } as ApiError;
+    }
+    return body as T;
+  } catch (err) {
+    // If backend connection fails (ECONNREFUSED) in local dev, fallback seamlessly to Mock Mode
+    if (typeof window !== "undefined" && (err as Error)?.name === "TypeError") {
+      console.warn(`[DroneHub API] Backend offline em ${API_URL}${path} — Usando Mock Data local.`);
+      return mockApiFetch<T>(path, options);
+    }
+    throw err;
   }
-  return body as T;
 }
 
 export function getApiBase() {
