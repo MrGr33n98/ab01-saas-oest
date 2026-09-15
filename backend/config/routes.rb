@@ -52,6 +52,13 @@ Rails.application.routes.draw do
       end
 
       namespace :marketplace do
+        resources :categories, only: %i[index show], param: :slug do
+          member do
+            get :operators
+            get :services
+            get :faqs
+          end
+        end
         resources :operators, only: %i[index show], param: :slug
         get "profiles/:slug", to: "marketplace/profiles#show"
         post "profiles/:slug/quote_requests", to: "marketplace/quote_requests#create"

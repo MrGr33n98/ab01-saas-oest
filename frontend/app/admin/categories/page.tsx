@@ -14,7 +14,7 @@ type CategoryItem = {
 
 export default function AdminCategoriesPage() {
   const [items, setItems] = useState<CategoryItem[]>(
-    SERVICE_CATEGORIES.map((c, i) => ({ slug: c.slug, name: c.name, description: c.description, active: true, position: i }))
+    SERVICE_CATEGORIES.map((c, i) => ({ slug: c.slug, name: c.name, description: c.description || "", active: true, position: i }))
   );
   const [name, setName] = useState("");
 
