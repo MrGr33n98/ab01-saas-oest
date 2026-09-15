@@ -70,14 +70,17 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
       </head>
-      <body className={`min-h-dvh ${inter.className} ${inter.variable}`}>
+      <body
+        className={`min-h-dvh ${inter.className} ${inter.variable}`}
+        suppressHydrationWarning
+      >
         <ToastProvider>
           {children}
         </ToastProvider>
