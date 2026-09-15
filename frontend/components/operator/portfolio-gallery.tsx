@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MapPin, Maximize2, Target, Camera } from "lucide-react";
 import { BeforeAfterSlider } from "./before-after-slider";
 import { Badge } from "@/components/ui/badge";
 
@@ -149,16 +150,28 @@ export function PortfolioGallery({ items = [] }: { items: PortfolioItemData[] })
 
               <div className="flex flex-wrap items-center gap-3 pt-2 text-[11px] text-text-muted border-t border-border/50">
                 {(item.location_city || item.location_state) && (
-                  <span>📍 {item.location_city ? `${item.location_city}, ` : ""}{item.location_state}</span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    <span>{item.location_city ? `${item.location_city}, ` : ""}{item.location_state}</span>
+                  </span>
                 )}
                 {item.area_hectares && (
-                  <span>📐 {item.area_hectares} ha</span>
+                  <span className="flex items-center gap-1">
+                    <Maximize2 className="h-3 w-3" />
+                    <span>{item.area_hectares} ha</span>
+                  </span>
                 )}
                 {item.media_assets?.[0]?.gsd_cm && (
-                  <span>🎯 GSD {item.media_assets[0].gsd_cm} cm/px</span>
+                  <span className="flex items-center gap-1">
+                    <Target className="h-3 w-3" />
+                    <span>GSD {item.media_assets[0].gsd_cm} cm/px</span>
+                  </span>
                 )}
                 {item.media_assets?.[0]?.sensor && (
-                  <span>📷 {item.media_assets[0].sensor}</span>
+                  <span className="flex items-center gap-1">
+                    <Camera className="h-3 w-3" />
+                    <span className="truncate max-w-[160px]">{item.media_assets[0].sensor}</span>
+                  </span>
                 )}
               </div>
             </div>

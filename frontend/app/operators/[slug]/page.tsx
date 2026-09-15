@@ -88,9 +88,9 @@ export default async function OperatorProfilePage({
 
       <PublicHeader />
 
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <main className="mx-auto max-w-[1180px] px-4 py-6 sm:px-6">
         {/* Breadcrumbs */}
-        <nav className="mb-6 flex items-center gap-2 text-xs text-text-muted">
+        <nav className="mb-4 flex items-center gap-2 text-xs text-text-muted">
           <Link href="/" className="hover:underline">
             Início
           </Link>

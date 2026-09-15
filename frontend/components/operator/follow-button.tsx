@@ -5,6 +5,8 @@ import { apiFetch, type ApiError } from "@/lib/api/client";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 
+import { Star, Check } from "lucide-react";
+
 type FollowButtonProps = {
   operatorSlug: string;
   initialFollowing?: boolean;
@@ -60,17 +62,17 @@ export function FollowButton({
       variant={following ? "secondary" : "outline"}
       onClick={handleToggleFollow}
       loading={loading}
-      className={`text-xs gap-1.5 transition ${className}`}
+      className={`text-xs gap-1.5 transition font-medium border-border-strong hover:bg-surface-soft ${className}`}
     >
       {following ? (
         <>
-          <span className="text-accent-ink font-bold">✓</span>
+          <Check className="h-3.5 w-3.5 text-accent-ink" />
           <span>Salvo na Carteira</span>
         </>
       ) : (
         <>
-          <span>⭐</span>
-          <span>Favoritar Fornecedor</span>
+          <Star className="h-3.5 w-3.5 text-text-muted" />
+          <span>Favoritar</span>
         </>
       )}
     </Button>

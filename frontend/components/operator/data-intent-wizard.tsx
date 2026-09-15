@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Calculator, Clock, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { apiFetch, type ApiError } from "@/lib/api/client";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -69,7 +70,9 @@ export function DataIntentWizard({ operatorSlug, operatorName, config }: WizardP
         method: "POST",
         body: JSON.stringify({
           service_type: serviceType,
-          area_hectares: parseFloat(areaHectares) || 0,
+          area_hectares: parseFloat(areaHectares) || 100,
+          city,
+          state_code: stateCode,
         }),
       });
 
@@ -80,17 +83,8 @@ export function DataIntentWizard({ operatorSlug, operatorName, config }: WizardP
       });
       setStep(3);
     } catch (err) {
-      // Fallback local calculation
-      const area = parseFloat(areaHectares) || 100;
-      const base = config?.min_base_price || 1500;
-      const rate = serviceType === "multispectral" ? 45 : serviceType === "lidar" ? 85 : 25;
-      const min = base + area * rate;
-      setEstimate({
-        minPrice: min,
-        maxPrice: min * 1.2,
-        days: config?.typical_delivery_days || 5,
-      });
-      setStep(3);
+      const e = err as ApiError;
+      toastError("Erro no cálculo", e.detail || e.title);
     } finally {
       setCalculating(false);
     }
@@ -107,31 +101,32 @@ export function DataIntentWizard({ operatorSlug, operatorName, config }: WizardP
           contact_email: contactEmail,
           contact_phone: contactPhone,
           service_type: serviceType,
+          area_hectares: parseFloat(areaHectares) || 100,
           city,
           state_code: stateCode,
-          estimated_area_ha: parseFloat(areaHectares) || 0,
+          estimated_min_price: estimate?.minPrice,
+          estimated_max_price: estimate?.maxPrice,
           notes,
         }),
       });
 
-      success("Solicitação enviada com sucesso! O operador entrará em contato em breve.");
+      success("Solicitação enviada!", `${operatorName} retornará seu contato em breve.`);
       setStep(4);
     } catch (err) {
-      const apiErr = err as ApiError;
-      toastError(apiErr.detail || apiErr.title || "Erro ao enviar solicitação.");
+      const e = err as ApiError;
+      toastError("Falha no envio", e.detail || e.title);
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="rounded-card border border-border bg-surface p-6 shadow-sm sm:p-8 space-y-6">
-      <div>
+    <div className="rounded-[14px] border border-[#E5EAE8] bg-white p-5 sm:p-6 shadow-2xs space-y-5">
+      {/* Header */}
+      <div className="border-b border-[#E5EAE8] pb-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-fg text-xs font-bold">
-            ⚡
-          </span>
-          <h2 className="text-lg font-bold text-text">
+          <Calculator className="h-5 w-5 text-accent-ink" />
+          <h2 className="text-base font-bold text-text">
             {config?.headline || "Calculadora Rápida de Orçamento & Estimativa"}
           </h2>
         </div>
@@ -141,16 +136,16 @@ export function DataIntentWizard({ operatorSlug, operatorName, config }: WizardP
       </div>
 
       {/* Step Indicators */}
-      <div className="flex items-center gap-2 border-b border-border pb-4 text-xs font-medium">
-        <span className={`px-2.5 py-1 rounded ${step === 1 ? "bg-primary text-primary-fg" : "bg-surface-soft text-text-muted"}`}>
+      <div className="flex items-center gap-2 border-b border-[#E5EAE8] pb-3 text-xs font-medium">
+        <span className={`px-2.5 py-1 rounded ${step === 1 ? "bg-accent text-accent-ink font-bold" : "bg-surface-soft text-text-muted"}`}>
           1. Serviço
         </span>
         <span className="text-text-muted">→</span>
-        <span className={`px-2.5 py-1 rounded ${step === 2 ? "bg-primary text-primary-fg" : "bg-surface-soft text-text-muted"}`}>
+        <span className={`px-2.5 py-1 rounded ${step === 2 ? "bg-accent text-accent-ink font-bold" : "bg-surface-soft text-text-muted"}`}>
           2. Área & Local
         </span>
         <span className="text-text-muted">→</span>
-        <span className={`px-2.5 py-1 rounded ${step >= 3 ? "bg-primary text-primary-fg" : "bg-surface-soft text-text-muted"}`}>
+        <span className={`px-2.5 py-1 rounded ${step >= 3 ? "bg-accent text-accent-ink font-bold" : "bg-surface-soft text-text-muted"}`}>
           3. Estimativa & Contato
         </span>
       </div>
@@ -161,24 +156,24 @@ export function DataIntentWizard({ operatorSlug, operatorName, config }: WizardP
           <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted">
             Qual tipo de dado você precisa?
           </label>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             {SERVICES.map((s) => (
               <button
                 key={s.value}
                 type="button"
                 onClick={() => setServiceType(s.value)}
-                className={`flex flex-col text-left rounded-card p-4 border transition ${
+                className={`flex flex-col text-left rounded-lg p-3.5 border transition ${
                   serviceType === s.value
-                    ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary"
-                    : "border-border bg-surface hover:border-border-strong"
+                    ? "border-accent-ink bg-surface-soft shadow-xs ring-1 ring-accent-ink"
+                    : "border-[#E5EAE8] bg-surface hover:border-border-strong"
                 }`}
               >
-                <span className="font-semibold text-text text-sm">{s.label}</span>
+                <span className="font-semibold text-text text-xs sm:text-sm">{s.label}</span>
               </button>
             ))}
           </div>
           <div className="flex justify-end pt-2">
-            <Button onClick={() => setStep(2)}>
+            <Button onClick={() => setStep(2)} className="bg-accent text-accent-ink font-bold text-xs">
               Avançar para Área & Local →
             </Button>
           </div>
@@ -232,11 +227,11 @@ export function DataIntentWizard({ operatorSlug, operatorName, config }: WizardP
           </div>
 
           <div className="flex justify-between pt-2">
-            <Button variant="outline" type="button" onClick={() => setStep(1)}>
+            <Button variant="outline" type="button" onClick={() => setStep(1)} className="text-xs">
               ← Voltar
             </Button>
-            <Button type="submit" loading={calculating}>
-              Calcular Estimativa Instantânea ⚡
+            <Button type="submit" loading={calculating} className="bg-accent text-accent-ink font-bold text-xs">
+              Calcular Estimativa Instantânea
             </Button>
           </div>
         </form>
@@ -244,17 +239,18 @@ export function DataIntentWizard({ operatorSlug, operatorName, config }: WizardP
 
       {/* Step 3: Estimate Output & Lead Form */}
       {step === 3 && estimate && (
-        <div className="space-y-6">
-          <div className="rounded-card border border-primary/40 bg-primary/5 p-6 space-y-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+        <div className="space-y-5">
+          <div className="rounded-lg border border-[#E5EAE8] bg-surface-soft p-5 space-y-2.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
               Estimativa Calculada
             </span>
             <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
               <div className="text-2xl font-bold text-text font-mono">
                 R$ {estimate.minPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} – R$ {estimate.maxPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </div>
-              <div className="text-xs font-medium text-text-muted">
-                ⏱️ Prazo típico: {estimate.days} dias úteis
+              <div className="flex items-center gap-1 text-xs font-medium text-text-muted">
+                <Clock className="h-3.5 w-3.5 text-text-muted" />
+                <span>Prazo típico: {estimate.days} dias úteis</span>
               </div>
             </div>
             <p className="text-xs text-text-muted">
@@ -262,12 +258,12 @@ export function DataIntentWizard({ operatorSlug, operatorName, config }: WizardP
             </p>
           </div>
 
-          <form onSubmit={handleSubmitLead} className="space-y-4">
-            <h3 className="text-sm font-semibold text-text">
+          <form onSubmit={handleSubmitLead} className="space-y-3.5">
+            <h3 className="text-sm font-bold text-text">
               Deseja receber a proposta formal de {operatorName}?
             </h3>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-3">
               <div>
                 <label className="block text-xs font-medium text-text mb-1">Seu Nome / Empresa</label>
                 <Input
@@ -307,14 +303,14 @@ export function DataIntentWizard({ operatorSlug, operatorName, config }: WizardP
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-between pt-2">
+            <div className="flex flex-col sm:flex-row gap-2.5 justify-between pt-2">
               <Link
                 href={`/app/missions/new?operator=${operatorSlug}&type=${serviceType}`}
-                className="btn-primary text-center px-6 py-2 text-sm"
+                className="btn-primary text-center px-5 py-2 text-xs font-bold"
               >
-                🚀 Criar Missão Oficial com Este Operador
+                Criar Missão Oficial com Este Operador
               </Link>
-              <Button type="submit" variant="secondary" loading={submitting}>
+              <Button type="submit" variant="secondary" loading={submitting} className="text-xs">
                 Enviar Contato Rápido
               </Button>
             </div>
@@ -324,17 +320,17 @@ export function DataIntentWizard({ operatorSlug, operatorName, config }: WizardP
 
       {/* Step 4: Success Message */}
       {step === 4 && (
-        <div className="text-center py-8 space-y-4">
-          <span className="text-4xl block">🎉</span>
-          <h3 className="text-lg font-bold text-text">Solicitação Enviada!</h3>
-          <p className="text-sm text-text-muted max-w-md mx-auto">
+        <div className="text-center py-8 space-y-3">
+          <CheckCircle2 className="h-10 w-10 text-emerald-600 mx-auto" />
+          <h3 className="text-base font-bold text-text">Solicitação Enviada!</h3>
+          <p className="text-xs sm:text-sm text-text-muted max-w-md mx-auto">
             {operatorName} recebeu sua solicitação para {areaHectares} hectares e retornará com os detalhes da operação.
           </p>
-          <div className="pt-4 flex justify-center gap-4">
-            <Button variant="outline" onClick={() => setStep(1)}>
+          <div className="pt-3 flex justify-center gap-3">
+            <Button variant="outline" onClick={() => setStep(1)} className="text-xs">
               Fazer Novo Cálculo
             </Button>
-            <Link href={`/app/missions/new?operator=${operatorSlug}`} className="btn-primary">
+            <Link href={`/app/missions/new?operator=${operatorSlug}`} className="btn-primary text-xs font-bold">
               Ir para o Workspace de Missões
             </Link>
           </div>

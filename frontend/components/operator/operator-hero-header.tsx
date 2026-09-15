@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { Star, MapPin, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
 import { FollowButton } from "./follow-button";
-import { Badge } from "@/components/ui/badge";
 
 export type OperatorHeroHeaderProps = {
   operator: {
@@ -43,201 +43,154 @@ export function OperatorHeroHeader({ operator }: OperatorHeroHeaderProps) {
     "Mapeamento aéreo, LiDAR e inteligência geoespacial para infraestrutura, engenharia e grandes projetos.";
   const bannerBadges = operator.banner_badges || ["Todo o Brasil", "Alta Precisão", "Resultados Comprovados"];
 
+  // Context line without repeating identical headline
+  const contextSubtitle =
+    operator.headline && operator.headline !== operator.name
+      ? operator.headline
+      : "Levantamentos de alta precisão, ortomosaicos, LiDAR e agricultura de precisão.";
+
   return (
     <div className="space-y-0">
-      {/* 01. Panoramic Hero Cover Banner */}
-      <div className="relative h-[240px] sm:h-[300px] lg:h-[340px] w-full overflow-hidden rounded-2xl border border-border/40 bg-oest-navy shadow-lg">
-        {/* Background Drone Photography */}
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
-          style={{ backgroundImage: `url(${bannerImage})` }}
+      {/* 01. Compact Hero Banner (Desktop: 240px, Tablet: 200px, Mobile: 160px) */}
+      <div className="relative h-[160px] sm:h-[200px] md:h-[240px] w-full overflow-hidden rounded-[20px] bg-oest-navy shadow-sm">
+        {/* Full-bleed background image with Next.js Image optimization */}
+        <Image
+          src={bannerImage}
+          alt={operator.name}
+          fill
+          priority
+          sizes="(max-width: 1180px) 100vw, 1180px"
+          className="object-cover object-center"
         />
 
-        {/* Cinematic Gradient Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-r from-oest-ink/90 via-oest-ink/65 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-oest-ink/70 via-transparent to-black/20" />
+        {/* Horizontal Dark Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#08121B]/85 via-[#08121B]/55 to-black/15" />
 
-        {/* Topography Contour Line Overlay (SVG) */}
+        {/* Topography Contour Line Overlay */}
         <svg
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 h-full w-full opacity-20"
+          className="pointer-events-none absolute inset-0 h-full w-full opacity-15"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            d="M-50 120 C 150 40, 300 200, 600 80 S 900 160, 1300 90"
+            d="M-40 100 C 140 30, 280 180, 580 70 S 880 150, 1200 80"
             fill="none"
             stroke="#b6ff55"
             strokeWidth="1.2"
             strokeDasharray="4 6"
           />
           <path
-            d="M-50 160 C 200 80, 400 240, 750 120 S 1050 200, 1400 130"
+            d="M-40 140 C 180 70, 380 220, 720 110 S 1020 180, 1300 120"
             fill="none"
             stroke="#ffffff"
             strokeWidth="0.8"
             strokeOpacity="0.4"
           />
-          <path
-            d="M-50 200 C 250 120, 500 280, 900 160 S 1200 240, 1500 170"
-            fill="none"
-            stroke="#cad7f6"
-            strokeWidth="0.8"
-            strokeOpacity="0.3"
-          />
         </svg>
 
-        {/* Banner Text Content */}
-        <div className="relative z-10 flex h-full flex-col justify-center px-6 sm:px-10 lg:px-12">
-          <div className="max-w-2xl space-y-2.5">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight drop-shadow-md">
+        {/* Banner Content (Headline + Subcopy + Pills) */}
+        <div className="relative z-10 flex h-full flex-col justify-between p-5 sm:p-7 md:p-8">
+          <div className="max-w-[460px] space-y-1">
+            <h1 className="text-xl sm:text-2xl md:text-[32px] font-bold tracking-tight text-white leading-[1.02] drop-shadow-sm">
               {bannerHeadline}
             </h1>
-            <p className="text-xs sm:text-sm text-white/85 leading-relaxed max-w-xl drop-shadow">
+            <p className="text-xs sm:text-[13px] text-white/80 leading-relaxed line-clamp-2 max-w-[420px]">
               {bannerSubtitle}
             </p>
+          </div>
 
-            {/* Translucent Badges */}
-            <div className="flex flex-wrap items-center gap-2 pt-2">
-              {bannerBadges.map((badge, idx) => (
-                <div
-                  key={badge}
-                  className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/40 px-3 py-1 text-[11px] font-medium text-white shadow-sm backdrop-blur-md"
-                >
-                  <span>{idx === 0 ? "📍" : idx === 1 ? "💎" : "📊"}</span>
-                  <span>{badge}</span>
-                </div>
-              ))}
-            </div>
+          {/* Compact Pills in Banner Footer */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            {bannerBadges.map((badge) => (
+              <span
+                key={badge}
+                className="inline-flex items-center rounded-full border border-white/20 bg-black/35 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-xs shadow-2xs"
+              >
+                {badge}
+              </span>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* 02. LinkedIn-style Overlapping Company Profile Card */}
-      <div className="relative z-20 -mt-10 sm:-mt-14 mx-3 sm:mx-6 lg:mx-8 rounded-xl border border-border bg-surface p-6 sm:p-8 shadow-md">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          {/* Avatar / Logo + Company Core Info */}
-          <div className="flex flex-col sm:flex-row items-start gap-5">
-            {/* Square Logo Overlapping the Banner */}
-            <div className="relative -mt-14 sm:-mt-20 h-28 w-28 sm:h-36 sm:w-36 shrink-0 rounded-2xl border-4 border-white bg-white p-2.5 shadow-xl transition-transform duration-300 hover:scale-105">
-              <img
-                src={avatarImage}
-                alt={operator.name}
-                className="h-full w-full rounded-xl object-contain"
-              />
+      {/* 02. Compact Profile Summary Card (Overlap: -48px, Height: 180-210px) */}
+      <div className="relative z-20 -mt-12 mx-3 sm:mx-6 rounded-[16px] border border-[#E4E9E7] bg-white p-5 sm:p-6 shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+        <div className="grid grid-cols-1 md:grid-cols-[108px_minmax(0,1fr)_220px] gap-5 items-center">
+          {/* Column 1: Avatar (108x108 with clean border and subtle shadow) */}
+          <div className="relative -mt-14 md:-mt-0 h-[84px] w-[84px] sm:h-[108px] sm:w-[108px] shrink-0 rounded-[18px] border border-[#E4E9E7] bg-white p-2 shadow-[0_8px_24px_rgba(0,0,0,0.08)] flex items-center justify-center">
+            <img
+              src={avatarImage}
+              alt={operator.name}
+              className="h-full w-full rounded-[12px] object-contain"
+            />
+          </div>
+
+          {/* Column 2: Identity / Trust / Meta */}
+          <div className="space-y-1.5 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl sm:text-2xl md:text-[26px] font-bold text-text leading-[1.08] tracking-tight">
+                {operator.name}
+              </h2>
             </div>
 
-            {/* Titles, Badges & Social Proof */}
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-xl sm:text-2xl lg:text-[26px] font-bold text-text tracking-tight">
-                  {operator.name}
-                </h2>
-                {operator.verification_status === "verified" && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[#b6ff55] px-3 py-0.5 text-xs font-semibold text-[#10170d] shadow-sm">
-                    Homologado ANAC ✓
-                  </span>
-                )}
-              </div>
+            <p className="text-[13px] sm:text-sm text-text-muted leading-snug line-clamp-1">
+              {contextSubtitle}
+            </p>
 
-              {operator.headline && (
-                <p className="text-sm font-medium text-text-muted leading-snug">
-                  {operator.headline}
-                </p>
-              )}
-
-              {/* Metrics Pill Row */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-xs text-text-muted">
-                {operator.rating_average && (
-                  <span className="flex items-center gap-1 font-semibold text-text">
-                    ⭐ <strong className="font-bold">{operator.rating_average.toFixed(1)}</strong> ({operator.rating_count || 119} avaliações)
-                  </span>
-                )}
-                <span className="rounded bg-surface-soft px-2.5 py-1 font-medium text-text border border-border/60">
-                  💼 {operator.missions_completed || 26} missões homologadas
+            {/* Badges & Status Row */}
+            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+              {operator.verification_status === "verified" && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-bold text-accent-ink shadow-2xs">
+                  <ShieldCheck className="h-3 w-3" />
+                  Homologado ANAC ✓
                 </span>
-              </div>
+              )}
+              {operator.accepting_jobs !== false && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Disponível para novas missões
+                </span>
+              )}
+            </div>
+
+            {/* Inline Metadata (Reviews, Missions, Location) */}
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-text-muted pt-1">
+              <span className="inline-flex items-center gap-1 font-semibold text-text">
+                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
+                <span>{operator.rating_average ? operator.rating_average.toFixed(1) : "5.0"}</span>
+                <span className="font-normal text-text-muted">({operator.rating_count || 28} avaliações)</span>
+              </span>
+              <span className="text-border-strong">•</span>
+              <span className="font-medium text-text">
+                {operator.missions_completed || 34} missões homologadas
+              </span>
+              {(operator.city || operator.state_code) && (
+                <>
+                  <span className="text-border-strong">•</span>
+                  <span className="inline-flex items-center gap-0.5 text-text">
+                    <MapPin className="h-3 w-3 text-text-muted" />
+                    <span>{operator.city ? `${operator.city}, ` : ""}{operator.state_code}</span>
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Right Column: B2B Conversion Actions */}
-          <div className="flex flex-col gap-2.5 shrink-0 sm:min-w-[220px]">
+          {/* Column 3: Compact CTA Column (220px) */}
+          <div className="flex flex-col gap-2 shrink-0 md:w-[220px]">
             <Link
               href={`/app/missions/new?operator=${operator.slug}`}
-              className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg bg-[#b6ff55] px-6 py-3 text-sm font-bold text-[#10170d] shadow-sm transition hover:brightness-95 active:translate-y-0.5"
+              className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-accent text-[13px] font-bold text-accent-ink shadow-sm transition hover:brightness-95 active:translate-y-0.5"
             >
-              <span>⚡</span>
+              <Zap className="h-3.5 w-3.5 fill-accent-ink" />
               <span>Solicitar Cotação</span>
             </Link>
 
-            <FollowButton operatorSlug={operator.slug} className="w-full" />
+            <FollowButton operatorSlug={operator.slug} className="w-full h-11" />
 
-            <div className="text-center pt-1">
-              {operator.accepting_jobs !== false ? (
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Disponível para novas missões
-                </span>
-              ) : (
-                <span className="text-xs text-text-muted">
-                  ○ Agenda temporariamente ocupada
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* About the Operation & Quick Contact Links (2 Columns) */}
-        <div className="mt-7 grid gap-6 border-t border-border pt-6 lg:grid-cols-12">
-          {/* About description */}
-          <div className="lg:col-span-8 space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted">
-              Sobre a Operação
-            </h3>
-            <p className="text-sm text-text leading-relaxed whitespace-pre-line">
-              {operator.about ||
-                "Empresa especializada em engenharia geoespacial, sensoriamento remoto e missões com drones profissionais homologados pela ANAC e DECEA."}
+            <p className="text-center text-[11px] text-emerald-700 font-medium">
+              ● Disponível agora
             </p>
-          </div>
-
-          {/* Quick Contact & Verified Social Links */}
-          <div className="lg:col-span-4 space-y-2.5 lg:border-l lg:border-border lg:pl-6">
-            {(operator.city || operator.state_code) && (
-              <div className="flex items-center gap-2 text-xs text-text">
-                <span className="text-sm">📍</span>
-                <span className="font-medium">
-                  {operator.city ? `${operator.city}, ` : ""}
-                  {operator.state_code || "Brasil"}
-                </span>
-              </div>
-            )}
-
-            {operator.website_url && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-sm">🌐</span>
-                <a
-                  href={operator.website_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-medium text-oest-blue hover:underline break-all"
-                >
-                  {operator.website_url.replace(/^https?:\/\//, "")} ↗
-                </a>
-              </div>
-            )}
-
-            {operator.linkedin_url && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-sm">💼</span>
-                <a
-                  href={operator.linkedin_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-medium text-oest-blue hover:underline break-all"
-                >
-                  {operator.linkedin_url.replace(/^https?:\/\/(www\.)?/, "")} ↗
-                </a>
-              </div>
-            )}
           </div>
         </div>
       </div>
