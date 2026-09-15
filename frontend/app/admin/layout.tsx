@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 const NAV = [
   { href: "/admin", label: "Dashboard" },
@@ -20,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex min-h-dvh">
       <aside className="hidden w-56 shrink-0 border-r border-border bg-surface md:block">
         <div className="flex h-14 items-center border-b border-border px-4">
-          <Link href="/admin" className="font-semibold text-text">Admin</Link>
+          <BrandLogo size="sm" href="/admin" tagline="Admin Console" />
         </div>
         <nav className="flex flex-col gap-0.5 p-3">
           {NAV.map((item) => (

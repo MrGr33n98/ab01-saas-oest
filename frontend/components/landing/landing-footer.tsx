@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 const columns = [
   ["Produto", [["Plataforma", "#plataforma"], ["Soluções", "#setores"], ["Integrações", "#integracoes"], ["Cobertura", "#cobertura"]]],
@@ -12,7 +13,7 @@ export function LandingFooter() {
       <div className="mx-auto max-w-[1320px] px-6 lg:px-8">
         <div className="grid gap-12 border-b border-white/15 pb-14 lg:grid-cols-12">
           <div className="lg:col-span-4">
-            <Link className="inline-flex items-center gap-2" href="/"><span className="flex h-8 w-8 items-center justify-center bg-oest-blue text-[11px] font-bold tracking-tighter">OE</span><span className="text-2xl font-bold tracking-[-0.04em]">OEST<span className="font-light text-oest-blue">.</span></span></Link>
+            <BrandLogo variant="dark" size="lg" tagline="Drone Data as a Service" />
             <p className="mt-5 max-w-[310px] text-[13px] leading-relaxed text-white/55">Infraestrutura para solicitar, operar e integrar dados do mundo físico.</p>
           </div>
           <div className="grid gap-10 sm:grid-cols-3 lg:col-span-8">

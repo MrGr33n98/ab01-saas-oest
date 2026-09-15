@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 const nav = [
   { href: "/app", label: "Início" },
@@ -21,9 +22,7 @@ export default function CustomerAppLayout({
     <div className="flex min-h-dvh">
       <aside className="hidden w-56 shrink-0 border-r border-border bg-surface md:block">
         <div className="flex h-14 items-center border-b border-border px-4">
-          <Link href="/app" className="font-semibold text-text">
-            DroneHub
-          </Link>
+          <BrandLogo size="sm" href="/app" tagline="Drone Data" />
         </div>
         <nav className="flex flex-col gap-0.5 p-3">
           {nav.map((item) => (
@@ -40,7 +39,9 @@ export default function CustomerAppLayout({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 items-center justify-between border-b border-border bg-surface px-4 md:px-6">
-          <span className="text-sm text-text-muted md:hidden">DroneHub</span>
+          <div className="md:hidden">
+            <BrandLogo size="sm" href="/app" tagline="Drone Data" />
+          </div>
           <div className="ml-auto flex items-center gap-3">
             <NotificationBell />
             <span className="text-[13px] text-text-muted">Org ativa</span>

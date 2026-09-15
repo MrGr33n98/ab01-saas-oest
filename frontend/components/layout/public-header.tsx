@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 const NAV = [
   { href: "/operators", label: "Operadores" },
@@ -15,9 +16,7 @@ export function PublicHeader() {
   return (
     <header className="border-b border-border bg-surface/80 backdrop-blur sticky top-0 z-50">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="text-lg font-semibold tracking-tight text-text">
-          DroneHub
-        </Link>
+        <BrandLogo size="md" tagline="Drone Data as a Service" />
         <nav className="hidden items-center gap-6 text-[14px] text-text-muted lg:flex">
           {NAV.map((item) => (
             <Link key={item.href} href={item.href} className="hover:text-text">

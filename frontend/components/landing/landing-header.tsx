@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 export function LandingHeader() {
   const [scrolled, setScrolled] = useState(false);
@@ -25,19 +26,7 @@ export function LandingHeader() {
     >
       <div className="mx-auto flex max-w-[1320px] items-center justify-between px-6 lg:px-8">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <span className="flex h-7 w-7 items-center justify-center bg-oest-blue text-[11px] font-bold tracking-tighter text-white transition-transform group-hover:scale-105">
-            OE
-          </span>
-          <div className="flex flex-col leading-none">
-            <span className="text-[19px] font-bold tracking-tight text-oest-ink">
-              OEST<span className="text-oest-blue font-light">.</span>
-            </span>
-            <span className="mt-0.5 text-[8px] font-semibold tracking-[0.16em] uppercase text-oest-blue">
-              Reality Data
-            </span>
-          </div>
-        </Link>
+        <BrandLogo size="md" tagline="Drone Data as a Service" />
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-7 text-[13px] font-medium tracking-tight text-oest-ink/80">

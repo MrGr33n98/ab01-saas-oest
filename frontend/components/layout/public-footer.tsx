@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SERVICE_CATEGORIES } from "@/lib/categories";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 const cols = {
   produto: [
@@ -37,8 +38,8 @@ export function PublicFooter() {
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
-            <p className="text-sm font-semibold text-text">DroneHub</p>
-            <p className="mt-2 text-[13px] leading-relaxed text-text-muted">
+            <BrandLogo size="md" tagline="Drone Data as a Service" />
+            <p className="mt-3 text-[13px] leading-relaxed text-text-muted">
               Marketplace e Mission OS para dados e serviços de drone no Brasil.
             </p>
           </div>
@@ -103,7 +104,7 @@ export function PublicFooter() {
         </div>
 
         <p className="mt-8 text-center text-[12px] text-text-muted">
-          © {new Date().getFullYear()} DroneHub · Brasil · BRL
+          © {new Date().getFullYear()} OEST · Drone Data as a Service · Brasil
         </p>
       </div>
     </footer>

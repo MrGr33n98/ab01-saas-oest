@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { BannerSlot } from "@/components/ads/banner-slot";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 export default function OperatorLayout({
   children,
@@ -16,16 +17,8 @@ export default function OperatorLayout({
     <div className="flex min-h-dvh bg-bg">
       {/* Sidebar */}
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-border bg-surface md:flex">
-        <div className="flex h-14 items-center gap-2 border-b border-border px-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-input bg-accent text-sm font-bold text-accent-ink">
-            DH
-          </div>
-          <div className="min-w-0">
-            <Link href="/operator" className="block truncate text-sm font-semibold text-text">
-              Operator Hub
-            </Link>
-            <p className="truncate text-[11px] text-text-muted">Painel operacional</p>
-          </div>
+        <div className="flex h-14 items-center border-b border-border px-4">
+          <BrandLogo size="sm" href="/operator" tagline="Operator Hub" />
         </div>
 
         <OperatorSidebarNav />
