@@ -1,0 +1,60 @@
+source "https://rubygems.org"
+
+ruby ">= 3.2.0"
+
+gem "rails", "~> 7.2"
+gem "pg", "~> 1.5"
+gem "activerecord-postgis-adapter", "~> 10.0"
+gem "puma", "~> 6.4"
+gem "redis", "~> 5.0"
+gem "sidekiq", "~> 7.2"
+gem "bootsnap", require: false
+
+# Auth & authorization
+gem "devise"
+gem "devise-jwt"
+gem "pundit", "~> 2.3"
+
+# ActiveAdmin 3.2.x — internal ops UI
+gem "activeadmin", "3.2.1"
+gem "sassc-rails"
+gem "csv"
+
+# API
+gem "alba"
+gem "rack-cors"
+gem "rack-attack"
+
+# Validation / money / state
+gem "aasm"
+gem "money-rails"
+
+# Payments
+gem "stripe", "~> 13.0"
+
+# Observability
+gem "opentelemetry-sdk"
+gem "opentelemetry-exporter-otlp"
+gem "lograge"
+
+# Security
+gem "secure_headers"
+
+group :development, :test do
+  gem "debug"
+  gem "rspec-rails", "~> 6.1"
+  gem "factory_bot_rails"
+  gem "faker"
+  gem "shoulda-matchers"
+  gem "database_cleaner-active_record"
+  gem "rubocop", require: false
+  gem "rubocop-rails", require: false
+  gem "rubocop-rspec", require: false
+  gem "brakeman", require: false
+  gem "bundler-audit", require: false
+end
+
+group :test do
+  gem "simplecov", require: false
+  gem "webmock"
+end

@@ -1,0 +1,530 @@
+openapi: 3.1.0
+info:
+  title: DroneHub API — MVP Golden Path
+  version: 1.0.0-mvp
+  description: |
+    Contract strictly limited to the MVP golden path:
+
+    sign_up → project → mission draft → AOI → products → publish
+    → quote → accept → order → confirm payment → start
+    → upload session → finalize → approve → review
+
+    Auth: Bearer access token + `X-Organization-Id` on tenant routes.
+    Critical mutations: `Idempotency-Key`.
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Local
+  - url: https://api.dronehub.example/api/v1
+    description: Production
+
+tags:
+  - name: Auth
+  - name: Projects
+  - name: Missions
+  - name: Catalog
+  - name: Quotes
+  - name: Orders
+  - name: Deliverables
+  - name: Reviews
+
+paths:
+  /auth/sign_up:
+    post:
+      tags: [Auth]
+      operationId: signUp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, accepted_terms]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                first_name: { type: string }
+                last_name: { type: string }
+                organization_name: { type: string }
+                organization_type:
+                  type: string
+                  enum: [customer, drone_operator]
+                accepted_terms: { type: boolean }
+      responses:
+        "201":
+          description: User + organization + tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignUpResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /auth/sign_in:
+    post:
+      tags: [Auth]
+      operationId: signIn
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignInResponse"
+        "401":
+          $ref: "#/components/responses/Problem"
+
+  /projects:
+    post:
+      tags: [Projects]
+      operationId: createProject
+      security:
+        - bearerAuth: []
+          organizationId: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, maxLength: 180 }
+                description: { type: string }
+                industry: { type: string }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectResponse"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+
+  /missions:
+    get:
+      tags: [Missions]
+      operationId: listMissions
+      security:
+        - bearerAuth: []
+          organizationId: []
+      responses:
+        "200":
+          description: Tenant-scoped list
+    post:
+      tags: [Missions]
+      operationId: createMission
+      security:
+        - bearerAuth: []
+          organizationId: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMissionRequest"
+      responses:
+        "201":
+          description: Draft mission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MissionResponse"
+
+  /missions/{id}:
+    get:
+      tags: [Missions]
+      operationId: getMission
+      security:
+        - bearerAuth: []
+          organizationId: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Mission workspace payload
+        "404":
+          $ref: "#/components/responses/Problem"
+
+  /missions/{id}/geometry:
+    post:
+      tags: [Missions]
+      operationId: setMissionGeometry
+      security:
+        - bearerAuth: []
+          organizationId: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [geometry]
+              properties:
+                geometry:
+                  type: object
+                  description: GeoJSON Polygon or MultiPolygon
+                  required: [type, coordinates]
+                  properties:
+                    type:
+                      type: string
+                      enum: [Polygon, MultiPolygon]
+                    coordinates:
+                      type: array
+      responses:
+        "200":
+          description: AOI stored; area_hectares computed server-side
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id: { type: string, format: uuid }
+                      area_hectares: { type: number }
+                      status: { type: string }
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /missions/{id}/products:
+    post:
+      tags: [Missions]
+      operationId: attachMissionProduct
+      security:
+        - bearerAuth: []
+          organizationId: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [data_product_id]
+              properties:
+                data_product_id: { type: string, format: uuid }
+                quantity: { type: number, default: 1 }
+      responses:
+        "201":
+          description: Product attached
+
+  /missions/{id}/publish:
+    post:
+      tags: [Missions]
+      operationId: publishMission
+      security:
+        - bearerAuth: []
+          organizationId: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Published; matching queued
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /missions/{id}/start:
+    post:
+      tags: [Missions]
+      operationId: startMission
+      security:
+        - bearerAuth: []
+          organizationId: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: in_progress (requires paid order)
+        "422":
+          $ref: "#/components/responses/Problem"
+
+  /missions/{id}/quotes:
+    post:
+      tags: [Quotes]
+      operationId: createQuote
+      security:
+        - bearerAuth: []
+          organizationId: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                proposal_text: { type: string }
+                currency: { type: string, default: BRL }
+                estimated_start_at: { type: string, format: date-time }
+                estimated_delivery_at: { type: string, format: date-time }
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [description, quantity, unit, unit_price]
+                    properties:
+                      description: { type: string }
+                      quantity: { type: number }
+                      unit: { type: string }
+                      unit_price: { type: number }
+      responses:
+        "201":
+          description: Quote draft/submitted
+
+  /quotes/{id}/accept:
+    post:
+      tags: [Quotes]
+      operationId: acceptQuote
+      security:
+        - bearerAuth: []
+          organizationId: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lock_version: { type: integer }
+      responses:
+        "200":
+          description: Quote accepted; order created
+        "409":
+          $ref: "#/components/responses/Problem"
+
+  /orders/{id}/confirm_payment:
+    post:
+      tags: [Orders]
+      operationId: confirmPayment
+      security:
+        - bearerAuth: []
+          organizationId: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                method:
+                  type: string
+                  enum: [pix, boleto, manual]
+                provider_payment_id: { type: string }
+      responses:
+        "200":
+          description: payment_status paid
+        "403":
+          $ref: "#/components/responses/Problem"
+
+  /missions/{id}/deliverables/upload-sessions:
+    post:
+      tags: [Deliverables]
+      operationId: createUploadSession
+      security:
+        - bearerAuth: []
+          organizationId: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [filename, content_type, byte_size]
+              properties:
+                filename: { type: string }
+                content_type: { type: string }
+                byte_size: { type: integer }
+      responses:
+        "201":
+          description: Presigned PUT URL (S3/MinIO)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      asset_id: { type: string, format: uuid }
+                      upload_url: { type: string, format: uri }
+                      storage_key: { type: string }
+
+  /deliverables/{id}/approve:
+    post:
+      tags: [Deliverables]
+      operationId: approveDeliverable
+      security:
+        - bearerAuth: []
+          organizationId: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: approved; mission completed
+
+  /missions/{id}/review:
+    post:
+      tags: [Reviews]
+      operationId: createReview
+      security:
+        - bearerAuth: []
+          organizationId: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [overall_rating]
+              properties:
+                overall_rating: { type: integer, minimum: 1, maximum: 5 }
+                title: { type: string }
+                body: { type: string }
+      responses:
+        "201":
+          description: Review created
+
+  /marketplace/data-products:
+    get:
+      tags: [Catalog]
+      operationId: listDataProducts
+      security: []
+      responses:
+        "200":
+          description: Active catalog (5–8 MVP products)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    organizationId:
+      type: apiKey
+      in: header
+      name: X-Organization-Id
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string }
+
+  schemas:
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        code: { type: string }
+        detail: { type: string }
+        request_id: { type: string }
+
+    Tokens:
+      type: object
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        token_type: { type: string }
+        expires_in: { type: integer }
+
+    SignUpResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            user: { type: object }
+            organization: { type: object }
+            tokens: { $ref: "#/components/schemas/Tokens" }
+        meta:
+          type: object
+          properties:
+            request_id: { type: string }
+
+    SignInResponse:
+      $ref: "#/components/schemas/SignUpResponse"
+
+    CreateMissionRequest:
+      type: object
+      required: [project_id, title, mission_type]
+      properties:
+        project_id: { type: string, format: uuid }
+        title: { type: string, maxLength: 200 }
+        mission_type: { type: string }
+        priority: { type: string, enum: [low, normal, high, urgent] }
+        deadline_at: { type: string, format: date-time }
+        budget:
+          type: object
+          properties:
+            min: { type: number }
+            max: { type: number }
+            currency: { type: string, default: BRL }
+
+    MissionResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            status: { type: string }
+            title: { type: string }
+            version: { type: integer }
+        meta:
+          type: object
+          properties:
+            request_id: { type: string }
+
+    ProjectResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            status: { type: string }
+
+  responses:
+    Problem:
+      description: RFC7807-inspired error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"

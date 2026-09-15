@@ -1,0 +1,5 @@
+Olá<% if @user&.first_name.present? %>, <%= @user.first_name %><% end %>,
+
+Entrega rejeitada. Motivo: <%= @reason %>
+
+<%= @cta_url %>

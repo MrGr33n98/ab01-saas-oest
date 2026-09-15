@@ -1,0 +1,21 @@
+default: &default
+  adapter: postgis
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: <%= ENV.fetch("POSTGRES_USER", "dronehub") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "dronehub") %>
+  host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
+  port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
+
+development:
+  <<: *default
+  database: dronehub_development
+
+test:
+  <<: *default
+  database: dronehub_test
+
+production:
+  <<: *default
+  database: <%= ENV.fetch("POSTGRES_DB", "dronehub_production") %>
+  url: <%= ENV["DATABASE_URL"] %>

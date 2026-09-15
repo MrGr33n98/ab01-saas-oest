@@ -1,0 +1,21 @@
+# Keep every build context small and deterministic.
+.git
+.github
+.next
+node_modules
+**/node_modules
+**/.next
+**/tmp
+**/log
+**/coverage
+**/storage
+**/.bundle
+**/vendor/bundle
+**/.env
+**/.env.*
+!.env.example
+docs
+*.md
+*.docx
+docker-compose.yml
+deploy

@@ -1,0 +1,77 @@
+// ActiveAdmin 3.2.1 + DroneHub branding
+@import "active_admin/mixins";
+@import "active_admin/base";
+
+// --- DroneHub theme overrides ---
+$dh-bg: #0B1413;
+$dh-surface: #14201e;
+$dh-accent: #3d8f6e;
+$dh-text: #e8f0ee;
+$dh-muted: #8aa39a;
+
+#header {
+  background: linear-gradient(90deg, $dh-bg, $dh-surface);
+  border-bottom: 2px solid $dh-accent;
+
+  h1 a, h1 a:hover {
+    color: $dh-text !important;
+    font-weight: 600;
+  }
+
+  ul.tabs > li > a {
+    color: $dh-muted;
+  }
+
+  ul.tabs > li.current > a,
+  ul.tabs > li > a:hover {
+    color: $dh-text;
+    background: rgba($dh-accent, 0.25);
+  }
+}
+
+#title_bar {
+  background: $dh-surface;
+  border-bottom: 1px solid rgba($dh-accent, 0.35);
+
+  h2 {
+    color: $dh-bg;
+  }
+}
+
+.flash {
+  &.flash_notice {
+    background: rgba($dh-accent, 0.15);
+    border-left: 4px solid $dh-accent;
+  }
+}
+
+.dronehub-import-csv {
+  max-width: 640px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e2e8e6;
+
+  h2 {
+    margin-top: 0;
+  }
+
+  code {
+    background: #f4f7f6;
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+}
+
+.status_tag {
+  &.yes, &.active, &.verified, &.published {
+    background: $dh-accent;
+  }
+}
+
+#footer {
+  text-align: center;
+  color: $dh-muted;
+  padding: 1rem;
+}

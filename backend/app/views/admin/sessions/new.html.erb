@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>DroneHub Admin</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0B1413; color: #e8f0ee; display: flex; min-height: 100vh; align-items: center; justify-content: center; margin: 0; }
+    .card { background: #14201e; padding: 2rem; border-radius: 12px; width: 100%; max-width: 360px; border: 1px solid #3d8f6e55; }
+    h1 { font-size: 1.25rem; margin: 0 0 1.5rem; }
+    label { display: block; font-size: 0.8rem; margin-bottom: 0.25rem; color: #8aa39a; }
+    input { width: 100%; padding: 0.6rem 0.75rem; margin-bottom: 1rem; border-radius: 8px; border: 1px solid #2a3d38; background: #0B1413; color: #e8f0ee; box-sizing: border-box; }
+    button { width: 100%; padding: 0.75rem; border: 0; border-radius: 8px; background: #3d8f6e; color: #fff; font-weight: 600; cursor: pointer; }
+    .alert { color: #f5a8a8; font-size: 0.85rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>DroneHub Admin 3.2.1</h1>
+    <% if flash[:alert] %><p class="alert"><%= flash[:alert] %></p><% end %>
+    <%= form_tag admin_user_session_path, method: :post do %>
+      <label>E-mail</label>
+      <input type="email" name="admin_user[email]" required autocomplete="username">
+      <label>Senha</label>
+      <input type="password" name="admin_user[password]" required autocomplete="current-password">
+      <button type="submit">Entrar</button>
+    <% end %>
+  </div>
+</body>
+</html>

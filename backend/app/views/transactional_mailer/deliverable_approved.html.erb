@@ -1,0 +1,7 @@
+<p style="margin:0 0 16px;font-size:16px;line-height:1.5;">
+  Olá<% if @user&.first_name.present? %>, <%= @user.first_name %><% end %>,
+</p>
+<p style="margin:0 0 12px;font-size:15px;color:#66716E;line-height:1.5;">Sua entrega em <strong><%= @mission.title %></strong> foi aprovada pelo cliente.</p>
+<p style="margin:28px 0 0;">
+  <a href="<%= @cta_url %>" style="display:inline-block;background:#B6FF55;color:#10170D;text-decoration:none;font-weight:600;font-size:14px;padding:12px 20px;border-radius:8px;">Abrir no DroneHub</a>
+</p>

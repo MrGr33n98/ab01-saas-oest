@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DroneHub</title>
+</head>
+<body style="margin:0;padding:0;background:#F4F7F5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0B1413;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F4F7F5;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width:560px;background:#ffffff;border-radius:12px;border:1px solid #DCE3E0;overflow:hidden;">
+          <tr>
+            <td style="padding:24px 28px;border-bottom:1px solid #DCE3E0;">
+              <span style="display:inline-block;background:#B6FF55;color:#10170D;font-weight:700;font-size:13px;padding:6px 10px;border-radius:8px;">DroneHub</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px;">
+              <%= yield %>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 28px;border-top:1px solid #DCE3E0;font-size:12px;color:#66716E;line-height:1.5;">
+              Você recebeu este e-mail porque tem uma conta DroneHub.<br>
+              © <%= Time.current.year %> DroneHub · Brasil
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<div class="dronehub-import-csv">
+  <h2>Importar Companies / Organizations (CSV)</h2>
+  <p>
+    Colunas: <code>name</code>, <code>slug</code> (opcional),
+    <code>organization_type</code>, <code>country_code</code>, <code>status</code>.
+  </p>
+  <p>
+    Tipos: <%= Organization::TYPES.join(", ") %>
+  </p>
+
+  <%= form_tag do_import_csv_admin_organizations_path, multipart: true do %>
+    <p>
+      <%= file_field_tag :file, accept: ".csv,text/csv" %>
+    </p>
+    <p>
+      <%= submit_tag "Importar", class: "button" %>
+      <%= link_to "Cancelar", admin_organizations_path, class: "button" %>
+      <%= link_to "Baixar template", template_csv_admin_organizations_path %>
+    </p>
+  <% end %>
+</div>

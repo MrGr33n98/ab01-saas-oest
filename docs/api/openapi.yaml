@@ -1,0 +1,213 @@
+openapi: 3.1.0
+info:
+  title: DroneHub API
+  version: 1.0.0
+  description: Enterprise marketplace & Mission Operating System API
+servers:
+  - url: https://api.dronehub.example/api/v1
+    description: Production
+  - url: http://localhost:3001/api/v1
+    description: Local
+
+security:
+  - bearerAuth: []
+  - organizationId: []
+
+paths:
+  /missions:
+    get:
+      summary: List missions for current organization
+      operationId: listMissions
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: Mission list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MissionListResponse"
+    post:
+      summary: Create mission draft
+      operationId: createMission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMissionRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MissionResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /missions/{id}/publish:
+    post:
+      summary: Publish mission to marketplace
+      operationId: publishMission
+      parameters:
+        - $ref: "#/components/parameters/MissionId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Published
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /marketplace/operators:
+    get:
+      summary: Search operators
+      operationId: searchOperators
+      parameters:
+        - name: filter[state]
+          in: query
+          schema: { type: string }
+        - name: filter[service]
+          in: query
+          schema: { type: string }
+        - name: filter[min_rating]
+          in: query
+          schema: { type: number }
+        - name: filter[radius_km]
+          in: query
+          schema: { type: number }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: Operator search results
+
+  /quotes/{id}/accept:
+    post:
+      summary: Accept quote (creates order)
+      operationId: acceptQuote
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Quote accepted, order created
+        "409":
+          description: Concurrent modification or conflict
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    organizationId:
+      type: apiKey
+      in: header
+      name: X-Organization-Id
+
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, default: 25, maximum: 100 }
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    MissionId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string }
+
+  schemas:
+    CreateMissionRequest:
+      type: object
+      required: [project_id, title, mission_type]
+      properties:
+        project_id: { type: string, format: uuid }
+        title: { type: string, maxLength: 200 }
+        mission_type: { type: string }
+        priority: { type: string, enum: [low, normal, high, urgent] }
+        preferred_start_at: { type: string, format: date-time }
+        deadline_at: { type: string, format: date-time }
+        budget:
+          type: object
+          properties:
+            min: { type: number }
+            max: { type: number }
+            currency: { type: string, default: BRL }
+
+    MissionSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        status: { type: string }
+        mission_type: { type: string }
+        area_hectares: { type: number }
+        deadline_at: { type: string, format: date-time }
+        published_at: { type: string, format: date-time }
+        version: { type: integer }
+
+    MissionResponse:
+      type: object
+      properties:
+        data: { $ref: "#/components/schemas/MissionSummary" }
+        meta:
+          type: object
+          properties:
+            request_id: { type: string }
+
+    MissionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/MissionSummary" }
+        meta:
+          type: object
+          properties:
+            request_id: { type: string }
+            pagination:
+              type: object
+              properties:
+                next_cursor: { type: string, nullable: true }
+                has_more: { type: boolean }
+                limit: { type: integer }
+
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        code: { type: string }
+        detail: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              code: { type: string }
+              message: { type: string }
+        request_id: { type: string }
+
+  responses:
+    ValidationError:
+      description: Semantic validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"

@@ -1,0 +1,160 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend-quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: dronehub
+          POSTGRES_PASSWORD: dronehub
+          POSTGRES_DB: dronehub_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify deployable Rails runtime contract
+        run: |
+          set -Eeuo pipefail
+          required=(
+            backend/Gemfile.lock
+            backend/config/boot.rb
+            backend/config/environment.rb
+            backend/config.ru
+            backend/bin/rails
+            backend/Rakefile
+          )
+          missing=0
+          for path in "${required[@]}"; do
+            if [[ ! -e "$path" ]]; then
+              echo "::error file=$path::Required Rails runtime file is missing."
+              missing=1
+            fi
+          done
+          if [[ "$missing" -ne 0 ]]; then
+            echo "Backend deployment is intentionally blocked until the Rails runtime contract is restored."
+            exit 1
+          fi
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: backend
+
+      - name: Boot check
+        working-directory: backend
+        env:
+          DATABASE_URL: postgis://dronehub:dronehub@localhost:5432/dronehub_test
+          REDIS_URL: redis://localhost:6379/0
+          RAILS_ENV: test
+          JWT_SECRET: ci-test-secret-minimum-32-chars-ok
+          ALLOW_DEV_AUTH: "false"
+        run: bundle exec rails runner "puts 'Rails boots OK'"
+
+      - name: Rubocop (gate)
+        working-directory: backend
+        run: bundle exec rubocop --parallel --format github
+
+      - name: DB Prepare
+        working-directory: backend
+        env:
+          DATABASE_URL: postgis://dronehub:dronehub@localhost:5432/dronehub_test
+          REDIS_URL: redis://localhost:6379/0
+          RAILS_ENV: test
+          JWT_SECRET: ci-test-secret-minimum-32-chars-ok
+          ALLOW_DEV_AUTH: "false"
+        run: bundle exec rails db:prepare
+
+      - name: RSpec (gate)
+        working-directory: backend
+        env:
+          DATABASE_URL: postgis://dronehub:dronehub@localhost:5432/dronehub_test
+          REDIS_URL: redis://localhost:6379/0
+          RAILS_ENV: test
+          JWT_SECRET: ci-test-secret-minimum-32-chars-ok
+          ALLOW_DEV_AUTH: "false"
+        run: bundle exec rspec --format progress --format json --out tmp/rspec_results.json
+
+      - name: Upload RSpec results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rspec-results
+          path: backend/tmp/rspec_results.json
+
+      - name: Brakeman security scan (gate)
+        working-directory: backend
+        run: |
+          gem install brakeman --no-document
+          brakeman --no-pager --exit-on-warn -q
+
+      - name: Bundle audit (CVE check)
+        working-directory: backend
+        run: |
+          gem install bundler-audit --no-document
+          bundle-audit check --update
+
+  frontend-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint (gate)
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Typecheck (gate)
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Build (validate)
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+        run: npm run build
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gitleaks secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: OpenAPI spec exists
+        run: |
+          if [ ! -f docs/api/openapi.yaml ] && [ ! -f backend/docs/openapi.yaml ]; then
+            echo "WARNING: No openapi.yaml found - tracking missing spec"
+            echo "::warning::OpenAPI spec missing at docs/api/openapi.yaml"
+          else
+            echo "OpenAPI spec found OK"
+          fi

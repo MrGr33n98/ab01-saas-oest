@@ -1,0 +1,109 @@
+# ==============================================================================
+# DroneHub / OEST SaaS Platform — Git Ignore Configuration (Senior A+++)
+# ==============================================================================
+
+# --- Operating Systems ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# --- IDEs & Code Editors ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+.cursor/
+.windsurf/
+.zed/
+
+# --- Environment, Secrets & Keys ---
+.env
+.env.*
+*.env
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+!deploy/.env.example
+config/application.yml
+config/master.key
+config/credentials/*.key
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+
+# --- Ruby & Rails (Backend) ---
+backend/vendor/bundle/
+backend/tmp/
+backend/log/
+backend/.bundle/
+backend/coverage/
+backend/public/assets/
+backend/public/packs/
+backend/public/packs-test/
+backend/storage/*
+!backend/storage/.keep
+backend/node_modules/
+backend/.byebug_history
+backend/.rspec_status
+backend/db/*.sqlite3
+backend/db/*.sqlite3-journal
+
+# --- Node.js & Next.js (Frontend) ---
+frontend/node_modules/
+node_modules/
+frontend/.next/
+.next/
+frontend/out/
+out/
+frontend/coverage/
+coverage/
+frontend/.turbo/
+.turbo/
+frontend/*.tsbuildinfo
+*.tsbuildinfo
+frontend/.npm/
+frontend/.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Containers, Databases & Local Storage ---
+.docker/
+miniodata/
+pgdata/
+*.sql
+*.sql.bak
+*.dump
+*.tar.gz
+
+# --- General Build, Cache & Temporary Files ---
+*.log
+.cache/
+dist/
+build/
+.temp/
+tmp/
+.pnpm-store/
+.nyc_output/
+
+# --- Test Artifacts & Reports ---
+test-results/
+playwright-report/
+blob-report/
