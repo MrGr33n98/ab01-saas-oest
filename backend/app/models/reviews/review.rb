@@ -10,6 +10,18 @@ module Reviews
     belongs_to :reviewer, class_name: "User"
 
     validates :overall_rating, inclusion: { in: 1..5 }
+    validates :technical_accuracy_rating, :timeliness_rating,
+              :communication_rating, :safety_compliance_rating,
+              inclusion: { in: 1..5 }
     validates :mission_id, uniqueness: true
+
+    after_save :trigger_profile_metric_recalculation
+    after_destroy :trigger_profile_metric_recalculation
+
+    private
+
+    def trigger_profile_metric_recalculation
+      operator_profile&.recalculate_rating_metrics!
+    end
   end
 end

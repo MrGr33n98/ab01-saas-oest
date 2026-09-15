@@ -4,17 +4,25 @@ module Reviews
   class Create
     Result = Struct.new(:success?, :review, :errors, keyword_init: true)
 
-    def self.call(mission:, user:, organization:, overall_rating:, body: nil, title: nil)
-      new(mission: mission, user: user, organization: organization, overall_rating: overall_rating, body: body, title: title).call
+    def self.call(mission:, user:, organization:, overall_rating:, **kwargs)
+      new(mission: mission, user: user, organization: organization, overall_rating: overall_rating, **kwargs).call
     end
 
-    def initialize(mission:, user:, organization:, overall_rating:, body:, title:)
+    def initialize(mission:, user:, organization:, overall_rating:, body: nil, title: nil, headline: nil,
+                   technical_accuracy_rating: nil, timeliness_rating: nil, communication_rating: nil,
+                   safety_compliance_rating: nil, delivered_gsd_cm: nil)
       @mission = mission
       @user = user
       @organization = organization
       @overall_rating = overall_rating.to_i
       @body = body
-      @title = title
+      @title = title || headline
+      @headline = headline || title
+      @technical_accuracy_rating = (technical_accuracy_rating || overall_rating).to_i
+      @timeliness_rating = (timeliness_rating || overall_rating).to_i
+      @communication_rating = (communication_rating || overall_rating).to_i
+      @safety_compliance_rating = (safety_compliance_rating || overall_rating).to_i
+      @delivered_gsd_cm = delivered_gsd_cm
     end
 
     def call
@@ -34,6 +42,12 @@ module Reviews
         operator_profile_id: profile.id,
         reviewer_id: user.id,
         overall_rating: overall_rating,
+        technical_accuracy_rating: technical_accuracy_rating,
+        timeliness_rating: timeliness_rating,
+        communication_rating: communication_rating,
+        safety_compliance_rating: safety_compliance_rating,
+        delivered_gsd_cm: delivered_gsd_cm,
+        headline: headline,
         title: title,
         body: body,
         verified: true,
@@ -41,13 +55,8 @@ module Reviews
         published_at: Time.current
       )
 
-      # Update aggregates simply
-      stats = Reviews::Review.where(operator_profile_id: profile.id)
-      profile.update!(
-        rating_count: stats.count,
-        rating_average: stats.average(:overall_rating)&.round(2),
-        missions_completed: profile.missions_completed + 1
-      )
+      # Trigger profile metrics
+      profile.recalculate_rating_metrics!
 
       Result.new(success?: true, review: review, errors: [])
     rescue ActiveRecord::RecordInvalid => e
@@ -56,7 +65,9 @@ module Reviews
 
     private
 
-    attr_reader :mission, :user, :organization, :overall_rating, :body, :title
+    attr_reader :mission, :user, :organization, :overall_rating, :body, :title, :headline,
+                :technical_accuracy_rating, :timeliness_rating, :communication_rating,
+                :safety_compliance_rating, :delivered_gsd_cm
 
     def fail!(msg)
       Result.new(success?: false, review: nil, errors: [msg])

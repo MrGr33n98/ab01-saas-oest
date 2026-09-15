@@ -12,6 +12,14 @@ class Organization < ApplicationRecord
   has_many :projects, class_name: "Projects::Project", dependent: :restrict_with_exception
   has_many :missions, class_name: "Missions::Mission", dependent: :restrict_with_exception
 
+  has_many :organization_follows,
+           foreign_key: :follower_organization_id,
+           class_name: "OrganizationFollow",
+           dependent: :destroy
+  has_many :followed_operator_profiles,
+           through: :organization_follows,
+           source: :followed_operator_profile
+
   validates :name, presence: true, length: { maximum: 180 }
   validates :slug, presence: true, uniqueness: { case_sensitive: false }
   validates :organization_type, inclusion: { in: TYPES }
@@ -22,6 +30,10 @@ class Organization < ApplicationRecord
 
   def operator?
     organization_type == "drone_operator" || operator_profile.present?
+  end
+
+  def following?(operator_profile)
+    organization_follows.exists?(followed_operator_profile_id: operator_profile.id)
   end
 
   private

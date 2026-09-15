@@ -24,6 +24,19 @@ Rails.application.routes.draw do
       post "auth/password/reset", to: "auth#password_reset"
       get "me", to: "auth#me"
 
+      # B2B Network / Follows & Favorites
+      post "operators/:slug/follow", to: "operator_follows#follow"
+      delete "operators/:slug/unfollow", to: "operator_follows#unfollow"
+      get "operators/:slug/follow_status", to: "operator_follows#status"
+      get "app/favorites/operators", to: "operator_follows#index"
+
+      # Public Showcase, Portfolio & Data Intent Wizard
+      get "operators/:slug/portfolio", to: "operator_portfolio#public_index"
+      get "operators/:slug/data_intent_config", to: "operator_data_intent#public_config"
+      post "operators/:slug/calculate_intent", to: "operator_data_intent#calculate"
+      post "operators/:slug/inquiries", to: "operator_data_intent#submit_inquiry"
+      get "operators/:slug/reviews", to: "reviews#public_index"
+
       resources :notifications, only: %i[index] do
         member do
           post :read, to: "notifications#mark_as_read"
@@ -60,6 +73,9 @@ Rails.application.routes.draw do
         resources :services
         resources :data_products
         resources :coverage_areas
+        resources :portfolio, controller: "operator_portfolio", only: %i[index create update destroy]
+        resource :data_intent_config, controller: "operator_data_intent", only: %i[show update]
+        resources :lead_inquiries, controller: "operator_data_intent", only: %i[index update]
         get "jobs", to: "jobs#index"
         get "missions", to: "missions#index"
         get "missions/:id", to: "missions#show"
@@ -158,7 +174,6 @@ Rails.application.routes.draw do
         post "banners/:id/track", to: "banners#track"
       end
 
-
       namespace :admin do
         resources :plans, only: %i[index update]
         get "feature_definitions", to: "entitlements#index"
@@ -199,4 +214,3 @@ Rails.application.routes.draw do
     end
   end
 end
-

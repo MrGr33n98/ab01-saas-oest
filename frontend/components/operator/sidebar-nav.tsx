@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   LayoutDashboard,
   Briefcase,
@@ -16,6 +16,8 @@ import {
   Settings,
   Crosshair,
   ChevronRight,
+  Sparkles,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,7 @@ const NAV = [
   { href: "/operator/jobs", label: "Jobs abertos", icon: Briefcase },
   { href: "/operator/proposals", label: "Propostas", icon: FileText },
   { href: "/operator/missions", label: "Missões ativas", icon: Crosshair },
+  { href: "/operator/portfolio", label: "Portfólio & Amostras", icon: Layers },
   { href: "/operator/fleet", label: "Frota", icon: Plane },
   { href: "/operator/pilots", label: "Pilotos", icon: Users },
   { href: "/operator/services", label: "Serviços", icon: Wrench },
@@ -31,7 +34,7 @@ const NAV = [
   { href: "/operator/compliance", label: "Compliance", icon: ShieldCheck },
   { href: "/operator/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/operator/payments", label: "Pagamentos", icon: Wallet },
-  { href: "/operator/settings", label: "Configurações", icon: Settings },
+  { href: "/operator/settings", label: "Configurações & Wizard", icon: Settings },
 ];
 
 export function OperatorSidebarNav() {

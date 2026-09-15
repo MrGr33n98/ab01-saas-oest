@@ -14,6 +14,19 @@ module Operators
     has_many :verification_badges, through: :operator_badges
     has_many :operator_materials, class_name: "Operators::OperatorMaterial", dependent: :destroy
     has_many :quote_requests, class_name: "QuoteRequest", dependent: :destroy
+    has_many :drones, class_name: "Operators::Drone", dependent: :destroy
+    has_many :pilots, class_name: "Operators::Pilot", dependent: :destroy
+    has_many :reviews, class_name: "Reviews::Review", dependent: :restrict_with_exception
+
+    # New B2B Network & Showcase Associations
+    has_many :portfolio_items, class_name: "Operators::PortfolioItem", dependent: :destroy
+    has_one :data_intent_config, class_name: "Operators::DataIntentConfig", dependent: :destroy
+    has_many :lead_inquiries, class_name: "Operators::LeadInquiry", dependent: :destroy
+    has_many :organization_follows,
+             foreign_key: :followed_operator_profile_id,
+             class_name: "OrganizationFollow",
+             dependent: :destroy
+    has_many :followers, through: :organization_follows, source: :follower_organization
 
     validates :slug, presence: true, uniqueness: { case_sensitive: false }
     validates :verification_status, inclusion: {
@@ -39,6 +52,17 @@ module Operators
 
     def public_path
       company? ? "/companies/#{slug}" : "/operators/#{slug}"
+    end
+
+    def recalculate_rating_metrics!
+      approved_reviews = reviews.where(moderation_status: "published")
+      count = approved_reviews.count
+      avg = count.positive? ? approved_reviews.average(:overall_rating).to_f.round(2) : nil
+
+      update_columns(
+        rating_average: avg,
+        rating_count: count
+      )
     end
 
     private

@@ -73,6 +73,7 @@ export default function MissionQuotesComparisonPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
 
   useEffect(() => {
     setLoading(true);
@@ -145,6 +146,10 @@ export default function MissionQuotesComparisonPage({
 
   const { mission, quotes } = data;
 
+  // Compute best badges
+  const minPrice = quotes.length > 0 ? Math.min(...quotes.map((q) => q.total || Infinity)) : null;
+  const maxRating = quotes.length > 0 ? Math.max(...quotes.map((q) => q.operator?.rating_average || 0)) : null;
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-12">
       {/* Header */}
@@ -159,16 +164,35 @@ export default function MissionQuotesComparisonPage({
               {mission.title}
             </Link>
             <span>/</span>
-            <span className="text-text">Comparação de propostas</span>
+            <span className="text-text">Matriz de Decisão Multicritério</span>
           </div>
-          <h1 className="mt-2 text-2xl font-semibold text-text">Propostas recebidas</h1>
+          <h1 className="mt-2 text-2xl font-bold text-text">Comparação de Propostas</h1>
           <p className="mt-0.5 text-sm text-text-muted">
             {quotes.length} {quotes.length === 1 ? "proposta submetida" : "propostas submetidas"} para esta missão.
           </p>
         </div>
-        <Link href={`/app/missions/${mission.id}`} className="rounded-input border border-border px-3 py-2 text-sm text-text hover:bg-surface-soft text-center">
-          ← Voltar ao workspace
-        </Link>
+
+        <div className="flex items-center gap-3">
+          {quotes.length > 0 && (
+            <div className="flex rounded-input border border-border bg-surface p-1 text-xs">
+              <button
+                onClick={() => setViewMode("cards")}
+                className={`px-3 py-1 rounded transition ${viewMode === "cards" ? "bg-primary text-primary-fg font-medium" : "text-text-muted"}`}
+              >
+                Cards
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`px-3 py-1 rounded transition ${viewMode === "table" ? "bg-primary text-primary-fg font-medium" : "text-text-muted"}`}
+              >
+                Tabela Comparativa
+              </button>
+            </div>
+          )}
+          <Link href={`/app/missions/${mission.id}`} className="rounded-input border border-border px-3 py-2 text-sm text-text hover:bg-surface-soft text-center">
+            ← Voltar ao workspace
+          </Link>
+        </div>
       </div>
 
       {quotes.length === 0 ? (
@@ -184,10 +208,91 @@ export default function MissionQuotesComparisonPage({
             Ver detalhes da missão
           </Link>
         </div>
+      ) : viewMode === "table" ? (
+        /* TABLE VIEW (Matrix) */
+        <div className="overflow-x-auto rounded-card border border-border bg-surface shadow-sm">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-surface-soft border-b border-border text-xs text-text-muted uppercase">
+              <tr>
+                <th className="p-4">Operador</th>
+                <th className="p-4">Valor Total</th>
+                <th className="p-4">Prazo / Entrega</th>
+                <th className="p-4">Reputação</th>
+                <th className="p-4">Cobertura / Base</th>
+                <th className="p-4 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {quotes.map((q) => {
+                const isBestPrice = q.total === minPrice && quotes.length > 1;
+                const isTopRated = (q.operator?.rating_average || 0) === maxRating && maxRating > 0 && quotes.length > 1;
+
+                return (
+                  <tr key={q.id} className="hover:bg-surface-soft/50 transition">
+                    <td className="p-4">
+                      <div className="font-semibold text-text">
+                        {q.operator?.organization_name || "Operador homologado"}
+                      </div>
+                      <div className="text-xs text-text-muted">{q.operator?.headline}</div>
+                      {q.operator?.slug && (
+                        <Link href={`/operators/${q.operator.slug}`} target="_blank" className="text-[11px] text-primary hover:underline mt-0.5 inline-block">
+                          Ver perfil completo ↗
+                        </Link>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <div className="font-bold text-text font-mono text-base">
+                        R$ {q.total?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </div>
+                      {isBestPrice && (
+                        <span className="inline-block mt-1 text-[10px] font-bold text-accent-ink bg-accent/30 px-1.5 py-0.5 rounded">
+                          ★ Menor Valor
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 text-xs">
+                      <div>Início: {q.estimated_start_at ? new Date(q.estimated_start_at).toLocaleDateString("pt-BR") : "A combinar"}</div>
+                      <div className="font-semibold text-text">Entrega: {q.estimated_delivery_at ? new Date(q.estimated_delivery_at).toLocaleDateString("pt-BR") : "A combinar"}</div>
+                    </td>
+                    <td className="p-4 text-xs">
+                      <div className="font-semibold text-text">
+                        ⭐ {q.operator?.rating_average ? q.operator.rating_average.toFixed(1) : "Novo"} ({q.operator?.rating_count || 0})
+                      </div>
+                      <div className="text-text-muted">{q.operator?.missions_completed || 0} missões feitas</div>
+                      {isTopRated && (
+                        <span className="inline-block mt-1 text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                          ★ Melhor Avaliado
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 text-xs">
+                      {q.coverage_fit?.label || "Base regional"}
+                    </td>
+                    <td className="p-4 text-right">
+                      {q.status === "accepted" ? (
+                        <span className="text-xs font-bold text-green-700">✓ Aceita</span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          disabled={!q.acceptible || acceptingId !== null}
+                          onClick={() => handleAccept(q)}
+                        >
+                          {acceptingId === q.id ? "Aceitando…" : "Aceitar & Pagar"}
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       ) : (
+        /* CARDS VIEW */
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {quotes.map((q, idx) => {
-            const isBestPrice = idx === 0 && quotes.length > 1;
+          {quotes.map((q) => {
+            const isBestPrice = q.total === minPrice && quotes.length > 1;
+            const isTopRated = (q.operator?.rating_average || 0) === maxRating && maxRating > 0 && quotes.length > 1;
 
             return (
               <div
@@ -212,6 +317,11 @@ export default function MissionQuotesComparisonPage({
                       <p className="text-xs text-text-muted line-clamp-1">
                         {q.operator?.headline || "Operador de drones"}
                       </p>
+                      {q.operator?.slug && (
+                        <Link href={`/operators/${q.operator.slug}`} target="_blank" className="text-[11px] text-primary hover:underline">
+                          Ver portfólio & reviews ↗
+                        </Link>
+                      )}
                     </div>
                     {q.operator?.verified && (
                       <span className="rounded bg-accent/30 px-1.5 py-0.5 text-[10px] font-semibold text-accent-ink">
@@ -230,29 +340,19 @@ export default function MissionQuotesComparisonPage({
                     <span className="rounded bg-surface-soft px-2 py-0.5 text-text-muted">
                       {q.operator?.missions_completed || 0} missões feitas
                     </span>
-                  </div>
-
-                  {/* Coverage Fit */}
-                  {q.coverage_fit && (
-                    <div className="mt-3">
-                      <span
-                        className={`inline-block rounded px-2 py-0.5 text-[11px] font-medium ${
-                          q.coverage_fit.level === "full"
-                            ? "bg-green-50 text-green-700 border border-green-200"
-                            : "bg-surface-soft text-text-muted border border-border"
-                        }`}
-                      >
-                        {q.coverage_fit.label}
+                    {isTopRated && (
+                      <span className="rounded bg-amber-100 text-amber-800 px-2 py-0.5 font-semibold text-[10px]">
+                        ★ Top Rated
                       </span>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {/* Pricing */}
                   <div className="mt-5 rounded-input border border-border bg-surface-soft p-4">
                     <p className="text-xs text-text-muted uppercase tracking-wider font-semibold">
                       Valor total
                     </p>
-                    <p className="mt-1 text-2xl font-bold text-text">
+                    <p className="mt-1 text-2xl font-bold text-text font-mono">
                       R$ {q.total?.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) || "—"}
                     </p>
                     <div className="mt-2 space-y-1 border-t border-border pt-2 text-[12px] text-text-muted">
@@ -291,7 +391,7 @@ export default function MissionQuotesComparisonPage({
                     </div>
                     <div>
                       <span className="text-text-muted block text-[11px]">Entrega:</span>
-                      <span className="font-medium text-text">
+                      <span className="font-medium text-text font-semibold">
                         {q.estimated_delivery_at
                           ? new Date(q.estimated_delivery_at).toLocaleDateString("pt-BR")
                           : "A combinar"}
@@ -313,7 +413,7 @@ export default function MissionQuotesComparisonPage({
                       disabled={!q.acceptible || acceptingId !== null}
                       onClick={() => handleAccept(q)}
                     >
-                      {acceptingId === q.id ? "Processando aceite…" : "Aceitar proposta"}
+                      {acceptingId === q.id ? "Processando aceite…" : "Aceitar proposta & Bloquear em Escrow"}
                     </Button>
                   )}
                 </div>
