@@ -5,6 +5,7 @@ import { OperatorRating } from "./operator-rating";
 export type OperatorCardData = {
   id: string;
   slug: string;
+  name?: string | null;
   headline?: string | null;
   verified?: boolean;
   rating_average?: number | null;
@@ -15,11 +16,13 @@ export type OperatorCardData = {
   city?: string | null;
   state_code?: string | null;
   logo_url?: string | null;
+  avatar_url?: string | null;
   accepting_jobs?: boolean;
 };
 
 export function OperatorCard({ op }: { op: OperatorCardData }) {
-  const name = op.organization_name || op.slug;
+  const name = op.name || op.organization_name || op.slug;
+  const avatarUrl = op.avatar_url || op.logo_url;
   const location = [op.city, op.state_code].filter(Boolean).join(", ");
 
   return (
@@ -29,7 +32,7 @@ export function OperatorCard({ op }: { op: OperatorCardData }) {
     >
       <OperatorAvatar
         name={name}
-        logoUrl={op.logo_url}
+        logoUrl={avatarUrl}
         size="md"
         verified={op.verified}
       />

@@ -50,9 +50,11 @@ module Api
 
         def serialize_card(profile)
           org = profile.organization
+          logo = logo_url_for(org)
           {
             id: profile.id,
             slug: profile.slug,
+            name: org&.name || profile.slug,
             headline: profile.headline,
             verification_status: profile.verification_status,
             verified: profile.verification_status == "verified",
@@ -64,7 +66,8 @@ module Api
             organization_name: org&.name,
             city: org&.city,
             state_code: org&.state_code,
-            logo_url: logo_url_for(org)
+            logo_url: logo,
+            avatar_url: logo
           }
         end
 
