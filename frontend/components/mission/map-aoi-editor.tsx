@@ -206,6 +206,7 @@ export function MapAoiEditor({ onSave, initialAreaHa }: Props) {
           <div
             ref={mapRef}
             id={`map-${mapId}`}
+            data-cursor="map"
             className="h-72 w-full overflow-hidden rounded-card border border-border bg-surface-soft"
           />
           {!mapReady && (

@@ -1,11 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import { Star, MapPin, CheckCircle2, ArrowRight, Users2 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n/client";
 
 export type CategoryOperatorData = {
   id: string;
   slug: string;
   name: string;
   headline: string;
+  headline_en?: string;
   city?: string;
   state_code?: string;
   rating_average: number;
@@ -19,9 +23,11 @@ export type CategoryOperatorData = {
 };
 
 export function CategoryOperatorCard({ op }: { op: CategoryOperatorData }) {
+  const { t, locale } = useTranslations();
   const location = [op.city, op.state_code].filter(Boolean).join(", ");
   const bannerImage = op.banner_image_url || "/images/operator-hero-banner.jpg";
   const avatarImage = op.avatar_url || "/images/nuvem-geo-logo.png";
+  const headlineText = locale === "en" && op.headline_en ? op.headline_en : op.headline;
 
   return (
     <div className="group relative flex flex-col justify-between overflow-hidden rounded-card border border-border bg-surface shadow-xs transition-all hover:border-border-strong hover:shadow-md">
@@ -40,7 +46,7 @@ export function CategoryOperatorCard({ op }: { op: CategoryOperatorData }) {
           <div className="absolute right-3 top-3">
             <span className="flex items-center gap-1 rounded-full bg-[#1A9E60]/90 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-xs backdrop-blur-xs">
               <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-              Disponível
+              {t("operators.available")}
             </span>
           </div>
 
@@ -86,7 +92,7 @@ export function CategoryOperatorCard({ op }: { op: CategoryOperatorData }) {
 
           {/* Headline */}
           <p className="mt-2.5 line-clamp-2 text-[12px] leading-relaxed text-text-muted">
-            {op.headline}
+            {headlineText}
           </p>
 
           {/* Skills / Payloads Pills */}
@@ -108,7 +114,7 @@ export function CategoryOperatorCard({ op }: { op: CategoryOperatorData }) {
         <div className="flex items-center gap-3 text-text-muted">
           <span className="flex items-center gap-1 font-medium text-text tabular-nums">
             <Users2 className="h-3.5 w-3.5 text-text-muted" />
-            {op.missions_completed} missões
+            {op.missions_completed} {locale === "en" ? "missions" : "missões"}
           </span>
           <span className="flex items-center gap-1 font-semibold text-[#1A9E60]">
             <CheckCircle2 className="h-3.5 w-3.5 text-[#1A9E60]" />
@@ -119,7 +125,7 @@ export function CategoryOperatorCard({ op }: { op: CategoryOperatorData }) {
         <Link
           href={`/operators/${op.slug}`}
           className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface text-text-muted shadow-2xs transition-all hover:border-border-strong hover:bg-surface-soft hover:text-text"
-          title={`Ver perfil completo de ${op.name}`}
+          title={`${t("categories.viewProfile")} - ${op.name}`}
         >
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>

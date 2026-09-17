@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   LayoutGrid,
@@ -14,6 +16,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { CategorySidebarItem } from "@/lib/categories";
+import { getLocalizedSectors } from "@/lib/categories";
+import { useTranslations } from "@/lib/i18n/client";
+import { BannerSlot } from "@/components/ads/banner-slot";
 
 const ICONS: Record<string, LucideIcon> = {
   "layout-grid": LayoutGrid,
@@ -28,17 +33,20 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 export function CategorySidebar({
-  items,
+  items: _initialItems,
   activeSlug,
 }: {
-  items: CategorySidebarItem[];
+  items?: CategorySidebarItem[];
   activeSlug: string;
 }) {
+  const { t, locale } = useTranslations();
+  const items = getLocalizedSectors(locale);
+
   return (
     <aside className="w-full shrink-0 lg:w-[260px]">
       <div className="rounded-card border border-border bg-surface p-4 shadow-xs">
         <h2 className="px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-text-muted">
-          Setores
+          {t("categories.sidebarTitle")}
         </h2>
 
         <nav className="mt-3 flex flex-col gap-1">
@@ -85,19 +93,24 @@ export function CategorySidebar({
             <Headphones className="mt-0.5 h-5 w-5 shrink-0 text-text-muted" />
             <div>
               <p className="text-[13px] font-semibold text-text leading-tight">
-                Não encontrou o setor?
+                {t("categories.supportTitle")}
               </p>
               <p className="mt-1 text-[12px] text-text-muted leading-relaxed">
-                Fale com o time OEST para uma solução personalizada.
+                {t("categories.supportDesc")}
               </p>
               <Link
                 href="/contact"
-                className="mt-3 inline-block w-full rounded-md border border-border bg-surface px-3 py-1.5 text-center text-[12px] font-semibold text-text shadow-2xs hover:bg-surface-soft"
+                className="mt-3 inline-block w-full rounded-md border border-border bg-surface px-3 py-1.5 text-center text-[12px] font-semibold text-text shadow-2xs hover:bg-surface-soft transition-colors"
               >
-                Falar com o time
+                {t("categories.supportCta")}
               </Link>
             </div>
           </div>
+        </div>
+
+        {/* Sidebar Banner Ad (OEST Ads: category.sidebar) */}
+        <div className="mt-4">
+          <BannerSlot placement="category.sidebar" category={activeSlug} variant="sidebar" />
         </div>
       </div>
     </aside>

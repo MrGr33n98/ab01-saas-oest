@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown, LayoutGrid, List, Map } from "lucide-react";
+import { useTranslations } from "@/lib/i18n/client";
 
 export type ViewMode = "grid" | "list" | "map";
 
@@ -19,6 +20,8 @@ export function CategoryFilters({
   locationFilter: string;
   onLocationChange: (loc: string) => void;
 }) {
+  const { t } = useTranslations();
+
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       {/* Filter Dropdown Pills */}
@@ -30,7 +33,7 @@ export function CategoryFilters({
             onChange={(e) => onLocationChange(e.target.value)}
             className="h-8 appearance-none rounded-md border border-border bg-surface pl-3 pr-7 text-[12px] font-medium text-text hover:bg-surface-soft focus:outline-none focus:ring-1 focus:ring-accent"
           >
-            <option value="">Localização</option>
+            <option value="">{t("categories.filters.location")}</option>
             <option value="SP">São Paulo (SP)</option>
             <option value="MT">Mato Grosso (MT)</option>
             <option value="MG">Minas Gerais (MG)</option>
@@ -47,11 +50,11 @@ export function CategoryFilters({
             className="h-8 appearance-none rounded-md border border-border bg-surface pl-3 pr-7 text-[12px] font-medium text-text hover:bg-surface-soft focus:outline-none focus:ring-1 focus:ring-accent"
             defaultValue=""
           >
-            <option value="">Serviços</option>
-            <option value="lidar">LiDAR Aéreo</option>
-            <option value="fotogrametria">Fotogrametria</option>
-            <option value="inspecao">Inspeção Visual / Térmica</option>
-            <option value="topografia">Topografia / DTM</option>
+            <option value="">{t("categories.filters.services")}</option>
+            <option value="lidar">LiDAR</option>
+            <option value="fotogrametria">Fotogrametria / Photogrammetry</option>
+            <option value="inspecao">Inspeção Visual / Inspection</option>
+            <option value="topografia">Topografia / Topography</option>
           </select>
           <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
         </div>
@@ -62,10 +65,10 @@ export function CategoryFilters({
             className="h-8 appearance-none rounded-md border border-border bg-surface pl-3 pr-7 text-[12px] font-medium text-text hover:bg-surface-soft focus:outline-none focus:ring-1 focus:ring-accent"
             defaultValue=""
           >
-            <option value="">Certificações</option>
-            <option value="anac">Homologado ANAC</option>
-            <option value="decea">DECEA / SARPAS</option>
-            <option value="crea">CREA / ART Registrado</option>
+            <option value="">{t("categories.filters.certifications")}</option>
+            <option value="anac">{t("categories.filters.homologatedAnac")}</option>
+            <option value="decea">{t("categories.filters.deceaReady")}</option>
+            <option value="crea">{t("categories.filters.creaArt")}</option>
           </select>
           <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
         </div>
@@ -76,9 +79,9 @@ export function CategoryFilters({
             className="h-8 appearance-none rounded-md border border-border bg-surface pl-3 pr-7 text-[12px] font-medium text-text hover:bg-surface-soft focus:outline-none focus:ring-1 focus:ring-accent"
             defaultValue=""
           >
-            <option value="">Disponibilidade</option>
-            <option value="immediate">Disponível agora</option>
-            <option value="7days">Próximos 7 dias</option>
+            <option value="">{t("categories.filters.availability")}</option>
+            <option value="immediate">{t("categories.filters.availableNow")}</option>
+            <option value="7days">{t("categories.filters.next7Days")}</option>
           </select>
           <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
         </div>
@@ -89,10 +92,10 @@ export function CategoryFilters({
             className="h-8 appearance-none rounded-md border border-border bg-surface pl-3 pr-7 text-[12px] font-medium text-text hover:bg-surface-soft focus:outline-none focus:ring-1 focus:ring-accent"
             defaultValue=""
           >
-            <option value="">Faixa de preço</option>
-            <option value="under_5k">Até R$ 5.000</option>
-            <option value="5k_15k">R$ 5.000 – R$ 15.000</option>
-            <option value="above_15k">Acima de R$ 15.000</option>
+            <option value="">{t("categories.filters.priceRange")}</option>
+            <option value="under_5k">{t("categories.filters.under5k")}</option>
+            <option value="5k_15k">{t("categories.filters.from5kTo15k")}</option>
+            <option value="above_15k">{t("categories.filters.above15k")}</option>
           </select>
           <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
         </div>
@@ -102,16 +105,16 @@ export function CategoryFilters({
       <div className="flex items-center justify-between gap-3 lg:justify-end">
         {/* Sort */}
         <div className="flex items-center gap-1.5 text-[12px] text-text-muted">
-          <span className="hidden sm:inline">Ordenar por:</span>
+          <span className="hidden sm:inline">{t("categories.filters.sortBy")}</span>
           <div className="relative inline-block">
             <select
               value={sortBy}
               onChange={(e) => onSortChange(e.target.value)}
               className="h-8 appearance-none rounded-md border border-border bg-surface pl-2.5 pr-6 text-[12px] font-medium text-text hover:bg-surface-soft focus:outline-none"
             >
-              <option value="relevance">Mais relevantes</option>
-              <option value="rating">Melhor avaliação</option>
-              <option value="missions">Mais missões feitas</option>
+              <option value="relevance">{t("categories.filters.sortRelevance")}</option>
+              <option value="rating">{t("categories.filters.sortRating")}</option>
+              <option value="missions">{t("categories.filters.sortMissions")}</option>
             </select>
             <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
           </div>
@@ -127,7 +130,7 @@ export function CategoryFilters({
                 ? "bg-[#EBF7EE] text-[#1A9E60]"
                 : "text-text-muted hover:text-text"
             }`}
-            title="Visualização em Lista"
+            title={t("categories.viewModes.list")}
           >
             <List className="h-4 w-4" />
           </button>
@@ -139,7 +142,7 @@ export function CategoryFilters({
                 ? "bg-[#EBF7EE] text-[#1A9E60]"
                 : "text-text-muted hover:text-text"
             }`}
-            title="Visualização em Grade"
+            title={t("categories.viewModes.grid")}
           >
             <LayoutGrid className="h-4 w-4" />
           </button>
@@ -151,7 +154,7 @@ export function CategoryFilters({
                 ? "bg-[#EBF7EE] text-[#1A9E60]"
                 : "text-text-muted hover:text-text"
             }`}
-            title="Visualização no Mapa"
+            title={t("categories.viewModes.map")}
           >
             <Map className="h-4 w-4" />
           </button>

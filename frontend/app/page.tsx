@@ -13,6 +13,7 @@ import { SocialProof } from "@/components/landing/social-proof";
 import { ActionCta } from "@/components/landing/action-cta";
 import { FaqSection } from "@/components/landing/faq-section";
 import { LandingFooter } from "@/components/landing/landing-footer";
+import { BannerSlot } from "@/components/ads/banner-slot";
 
 export const metadata = {
   title: "OEST — Reality Data & Drone as a Service Platform",
@@ -22,7 +23,7 @@ export const metadata = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-dvh flex flex-col bg-white text-oest-ink selection:bg-oest-blue selection:text-white">
+    <div className="relative min-h-dvh flex flex-col bg-transparent text-oest-ink selection:bg-oest-blue selection:text-white">
       {/* 01. Header / Navigation */}
       <LandingHeader />
 
@@ -32,6 +33,11 @@ export default function LandingPage() {
 
         {/* 03. Microproof Metrics Bar */}
         <MicroproofBar />
+
+        {/* Ad Placement: landing.hero_below */}
+        <div className="mx-auto max-w-[1320px] px-6 lg:px-8 my-6">
+          <BannerSlot placement="landing.hero_below" variant="leaderboard" />
+        </div>
 
         {/* 04. Platform Showcase / Mockup */}
         <PlatformShowcase />

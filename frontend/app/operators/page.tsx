@@ -67,6 +67,11 @@ export default async function OperatorsPage({
                 </li>
               ))}
             </ul>
+
+            {/* Sidebar Ad (OEST Ads: operators.sidebar) */}
+            <div className="mt-6">
+              <BannerSlot placement="operators.sidebar" variant="sidebar" />
+            </div>
           </aside>
 
           <div className="min-w-0 flex-1">

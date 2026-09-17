@@ -1,3 +1,5 @@
+import { getMessages, type Locale } from "./i18n";
+
 const getApiBase = () =>
   process.env.OEST_API_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
@@ -132,7 +134,26 @@ export const PRIMARY_SECTORS: CategorySidebarItem[] = [
   { id: "sec-8", slug: "ambiental", name: "Ambiental", description: "Monitoramento de APPs, reflorestamento e fauna", icon_key: "trees", operator_count: 15, position: 8 },
 ];
 
-export const SERVICE_CATEGORIES = PRIMARY_SECTORS.filter(s => s.slug !== "all");
+export const SERVICE_CATEGORIES = PRIMARY_SECTORS.filter((s) => s.slug !== "all");
+
+/**
+ * Returns sectors localized according to active locale
+ */
+export function getLocalizedSectors(locale: Locale = "pt-BR"): CategorySidebarItem[] {
+  const msgs = getMessages(locale);
+  return PRIMARY_SECTORS.map((sec) => {
+    const secMsgs = msgs.sectors[sec.slug as keyof typeof msgs.sectors];
+    if (secMsgs) {
+      return {
+        ...sec,
+        name: secMsgs.name,
+        short_name: secMsgs.shortName,
+        description: secMsgs.description,
+      };
+    }
+    return sec;
+  });
+}
 
 export const MOCK_CATEGORY_DETAILS: Record<string, CategoryDetail> = {
   infraestrutura: {
@@ -300,12 +321,68 @@ export const MOCK_CATEGORY_DETAILS: Record<string, CategoryDetail> = {
   },
 };
 
+/**
+ * Returns localized category detail when language is English
+ */
+export function getLocalizedCategoryDetail(detail: CategoryDetail, locale: Locale = "pt-BR"): CategoryDetail {
+  if (locale !== "en") return detail;
+
+  const msgs = getMessages(locale);
+  const secMsgs = msgs.sectors[detail.slug as keyof typeof msgs.sectors];
+
+  const localizedName = secMsgs?.name || detail.name;
+  const localizedHeadline = detail.slug === "energia" ? "Energy & Renewables" : detail.slug === "infraestrutura" ? "Infrastructure" : localizedName;
+  const localizedSubheadline = detail.slug === "energia"
+    ? "Radiometric thermography and high-precision inspection of solar plants, wind farms and substations."
+    : detail.slug === "infraestrutura"
+    ? "Surveys, monitoring and inspection of critical assets with millimeter-precision geospatial data."
+    : `Specialized aerial surveys and drone operations for ${localizedName}.`;
+
+  return {
+    ...detail,
+    name: localizedName,
+    short_name: secMsgs?.shortName || detail.short_name,
+    headline: localizedHeadline,
+    subheadline: localizedSubheadline,
+    short_description: secMsgs?.description || detail.short_description,
+    editorial: detail.editorial ? {
+      ...detail.editorial,
+      overview_title: detail.slug === "infraestrutura" ? "How drones transform the infrastructure lifecycle" : "Sector Overview",
+      services_title: "Featured Services",
+      services_description: "Cutting-edge LiDAR sensors and full-frame photogrammetric systems.",
+      use_cases_title: "Sub-segments & Specialized Applications",
+      use_cases_description: "Standardized and certified missions for major industries.",
+      operators_title: "Specialized Certified Operators",
+      operators_description: "Companies with valid ANAC/SISANT registration and mandatory RETA insurance.",
+      faq_title: "Frequently Asked Questions",
+      faq_description: "Key answers about accuracy, deliverables, and flight regulations.",
+      related_categories_title: "Related Sectors",
+    } : undefined,
+    cta: {
+      title: `Ready to map or inspect in ${localizedName}?`,
+      description: "Describe your area of interest (KML/KMZ) and receive up to 3 verified proposals within 24 hours.",
+      primary_label: `Request ${localizedName} Mission`,
+      primary_url: detail.cta.primary_url,
+      secondary_label: "Talk to a Specialist",
+      secondary_url: detail.cta.secondary_url,
+    },
+    related_categories: detail.related_categories.map((rel) => {
+      const relSec = msgs.sectors[rel.slug as keyof typeof msgs.sectors];
+      return {
+        ...rel,
+        name: relSec?.name || rel.name,
+      };
+    }),
+  };
+}
+
 export const MOCK_CATEGORY_OPERATORS = [
   {
     id: "op-1",
     slug: "aerovision-mt",
     name: "AeroVision MT",
     headline: "Especialista em mapeamento de infraestrutura linear, obras viárias e monitoramento de ativos.",
+    headline_en: "Specialist in linear infrastructure mapping, road works, and asset monitoring.",
     city: "Sinop",
     state_code: "MT",
     rating_average: 5.0,
@@ -322,6 +399,7 @@ export const MOCK_CATEGORY_OPERATORS = [
     slug: "geoscan-brasil",
     name: "GeoScan Brasil",
     headline: "Levantamento e inspeção de linhas de transmissão, subestações e grandes estruturas.",
+    headline_en: "Survey and inspection of transmission lines, substations, and large structures.",
     city: "São Paulo",
     state_code: "SP",
     rating_average: 4.8,
@@ -338,6 +416,7 @@ export const MOCK_CATEGORY_OPERATORS = [
     slug: "terramap",
     name: "TerraMap",
     headline: "Mapeamento e acompanhamento de obras de grande escala com alta precisão e produtividade.",
+    headline_en: "Large-scale construction mapping and progress tracking with high precision and productivity.",
     city: "Belo Horizonte",
     state_code: "MG",
     rating_average: 4.9,
@@ -354,6 +433,7 @@ export const MOCK_CATEGORY_OPERATORS = [
     slug: "horus-drones",
     name: "Horus Drones",
     headline: "Inspeção e monitoramento de rodovias, taludes e obras de infraestrutura.",
+    headline_en: "Inspection and monitoring of highways, slopes, and infrastructure works.",
     city: "Curitiba",
     state_code: "PR",
     rating_average: 4.7,
@@ -370,6 +450,7 @@ export const MOCK_CATEGORY_OPERATORS = [
     slug: "vista-aerea",
     name: "Vista Aérea",
     headline: "Mapeamento de obras, controle de avanço físico e modelagem 3D para infraestrutura.",
+    headline_en: "Construction mapping, physical progress monitoring, and 3D modeling for infrastructure.",
     city: "Goiânia",
     state_code: "GO",
     rating_average: 4.8,
@@ -386,6 +467,7 @@ export const MOCK_CATEGORY_OPERATORS = [
     slug: "maptech",
     name: "MapTech",
     headline: "Soluções em geoinformação para obras civis, ferroviárias e infraestrutura urbana.",
+    headline_en: "Geoinformation solutions for civil works, railways, and urban infrastructure.",
     city: "Porto Alegre",
     state_code: "RS",
     rating_average: 4.9,

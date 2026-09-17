@@ -37,7 +37,39 @@
   }
 }
 
+/* ============================================================================
+   Custom Drone Cursor - Desktop Pointer-Fine Environment Rules
+   ============================================================================ */
+@media (pointer: fine) and (hover: hover) {
+  html.has-custom-drone-cursor,
+  html.has-custom-drone-cursor body,
+  html.has-custom-drone-cursor a,
+  html.has-custom-drone-cursor button,
+  html.has-custom-drone-cursor [role="button"],
+  html.has-custom-drone-cursor input,
+  html.has-custom-drone-cursor select,
+  html.has-custom-drone-cursor textarea,
+  html.has-custom-drone-cursor summary,
+  html.has-custom-drone-cursor label,
+  html.has-custom-drone-cursor [data-cursor] {
+    cursor: none !important;
+  }
+}
+
 @layer components {
+  @keyframes oest-logo-rotate {
+    to {
+      transform: rotateY(360deg);
+    }
+  }
+
+  .oest-logo-globe {
+    animation: oest-logo-rotate 12s linear infinite;
+    transform-origin: center;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-input px-4 py-2.5 text-[15px] font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none;
   }

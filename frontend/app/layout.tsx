@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
+import { DroneCursor } from "@/components/ui/drone-cursor";
+import { TopographicBackground } from "@/components/ui/topographic-background";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -81,6 +83,8 @@ export default function RootLayout({
         className={`min-h-dvh ${inter.className} ${inter.variable}`}
         suppressHydrationWarning
       >
+        <TopographicBackground />
+        <DroneCursor />
         <ToastProvider>
           {children}
         </ToastProvider>

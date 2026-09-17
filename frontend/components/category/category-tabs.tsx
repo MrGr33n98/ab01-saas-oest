@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Search } from "lucide-react";
+import { useTranslations } from "@/lib/i18n/client";
 
 export type CategoryTabKey = "operators" | "services" | "cases" | "insights";
 
@@ -18,11 +18,13 @@ export function CategoryTabs({
   searchQuery: string;
   onSearchChange: (query: string) => void;
 }) {
+  const { t } = useTranslations();
+
   const tabs = [
-    { key: "operators" as const, label: `Operadores (${operatorCount})` },
-    { key: "services" as const, label: "Serviços" },
-    { key: "cases" as const, label: "Cases" },
-    { key: "insights" as const, label: "Dados e Insights" },
+    { key: "operators" as const, label: `${t("categories.tabs.operators")} (${operatorCount})` },
+    { key: "services" as const, label: t("categories.tabs.services") },
+    { key: "cases" as const, label: t("categories.tabs.cases") },
+    { key: "insights" as const, label: t("categories.tabs.insights") },
   ];
 
   return (
@@ -35,7 +37,7 @@ export function CategoryTabs({
             <button
               key={tab.key}
               onClick={() => onTabChange(tab.key)}
-              className={`relative py-1 font-semibold transition-colors ${
+              className={`relative py-1 font-semibold transition-colors whitespace-nowrap ${
                 isActive ? "text-[#1A9E60]" : "text-text-muted hover:text-text"
               }`}
             >
@@ -55,7 +57,7 @@ export function CategoryTabs({
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Buscar operadores, serviços ou localização…"
+          placeholder={t("categories.searchPlaceholder")}
           className="h-9 w-full rounded-input border border-border bg-surface pl-9 pr-3 text-[13px] text-text placeholder:text-text-muted focus:border-border-strong focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
       </div>

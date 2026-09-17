@@ -7,6 +7,8 @@ export type MvpSession = {
   refreshToken?: string;
   orgId: string;
   email?: string;
+  /** Product workspace asserted by the API, never inferred only from UI choice. */
+  tenantType?: "operator" | "enterprise";
 };
 
 export function loadSession(): MvpSession | null {

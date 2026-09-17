@@ -2,51 +2,67 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback } from "react";
-import type { Locale } from "@/lib/i18n";
+import { useLocale, writeLocale, type Locale } from "@/lib/i18n/client";
 
-const COOKIE = "NEXT_LOCALE";
+interface LocaleSwitcherProps {
+  locale?: Locale;
+  className?: string;
+}
 
-export function LocaleSwitcher({ locale }: { locale: Locale }) {
+export function LocaleSwitcher({
+  locale: propLocale,
+  className = "",
+}: LocaleSwitcherProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const currentLocale = useLocale();
+  const activeLocale = propLocale || currentLocale;
 
-  const setLocale = useCallback(
+  const handleSelect = useCallback(
     (next: Locale) => {
-      document.cookie = `${COOKIE}=${next};path=/;max-age=31536000;samesite=lax`;
-      // Soft refresh so server components pick cookie if middleware reads it
-      router.refresh();
-      // Also support prefix strategy when path starts with /en
-      if (next === "en" && !pathname.startsWith("/en")) {
-        router.push(`/en${pathname === "/" ? "" : pathname}`);
-      } else if (next === "pt-BR" && pathname.startsWith("/en")) {
+      if (next === activeLocale) return;
+      writeLocale(next);
+
+      // If the user happens to be on /en/*, clean up to normal path
+      if (pathname.startsWith("/en")) {
         const rest = pathname.replace(/^\/en/, "") || "/";
         router.push(rest);
+      } else {
+        router.refresh();
       }
     },
-    [pathname, router]
+    [activeLocale, pathname, router]
   );
 
   return (
     <div
-      className="inline-flex items-center rounded-input border border-border text-[12px] font-medium"
+      className={`inline-flex items-center rounded-full border border-oest-ink/15 bg-white/80 p-0.5 shadow-2xs backdrop-blur-sm transition-colors ${className}`}
       role="group"
-      aria-label="Language"
+      aria-label="Selecionar Idioma / Select Language"
     >
       <button
         type="button"
-        className={`px-2.5 py-1.5 ${
-          locale === "pt-BR" ? "bg-accent text-accent-ink" : "text-text-muted hover:text-text"
+        onClick={() => handleSelect("pt-BR")}
+        className={`rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wider transition-all duration-200 ${
+          activeLocale === "pt-BR"
+            ? "bg-oest-green text-white shadow-xs scale-100"
+            : "text-oest-ink/60 hover:text-oest-ink hover:bg-black/5"
         }`}
-        onClick={() => setLocale("pt-BR")}
+        aria-pressed={activeLocale === "pt-BR"}
+        title="Português (Brasil)"
       >
         PT
       </button>
       <button
         type="button"
-        className={`px-2.5 py-1.5 ${
-          locale === "en" ? "bg-accent text-accent-ink" : "text-text-muted hover:text-text"
+        onClick={() => handleSelect("en")}
+        className={`rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wider transition-all duration-200 ${
+          activeLocale === "en"
+            ? "bg-oest-green text-white shadow-xs scale-100"
+            : "text-oest-ink/60 hover:text-oest-ink hover:bg-black/5"
         }`}
-        onClick={() => setLocale("en")}
+        aria-pressed={activeLocale === "en"}
+        title="English"
       >
         EN
       </button>

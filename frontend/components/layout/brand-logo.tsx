@@ -47,7 +47,7 @@ export function BrandLogo({
       <img
         src="/images/oest-logo.png"
         alt="OEST Logo"
-        className={`${currentSize.img} w-auto object-contain transition-transform group-hover:scale-[1.02] ${
+        className={`oest-logo-globe ${currentSize.img} w-auto object-contain ${
           isDark ? "brightness-0 invert opacity-95" : ""
         }`}
       />

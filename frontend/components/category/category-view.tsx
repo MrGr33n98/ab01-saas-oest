@@ -9,16 +9,25 @@ import { CategoryFAQ } from "./category-faq";
 import { CategoryUseCases } from "./category-use-cases";
 import { CategoryRelatedGrid } from "./category-related";
 import { CategoryCTA } from "./category-cta";
+import { BannerSlot } from "@/components/ads/banner-slot";
 import type { CategoryDetail } from "@/lib/categories";
+import { getLocalizedCategoryDetail } from "@/lib/categories";
+import { useTranslations } from "@/lib/i18n/client";
 import type { CategoryOperatorData } from "./category-operator-card";
 
 export function CategoryView({
-  category,
+  category: initialCategory,
   initialOperators,
 }: {
   category: CategoryDetail;
   initialOperators: CategoryOperatorData[];
 }) {
+  const { t, locale } = useTranslations();
+  const category = useMemo(
+    () => getLocalizedCategoryDetail(initialCategory, locale),
+    [initialCategory, locale]
+  );
+
   const [activeTab, setActiveTab] = useState<CategoryTabKey>("operators");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -93,8 +102,8 @@ export function CategoryView({
       {activeTab === "services" && (
         <CategoryUseCases
           useCases={category.use_cases}
-          title={category.editorial?.services_title || "Serviços em Destaque"}
-          description={category.editorial?.services_description || "Pacotes e modalidades de contratação para sua operação."}
+          title={category.editorial?.services_title || t("categories.tabs.services")}
+          description={category.editorial?.services_description || "Soluções e pacotes de contratação para sua operação."}
         />
       )}
 
@@ -103,7 +112,7 @@ export function CategoryView({
         <div className="rounded-card border border-border bg-surface p-8 text-center">
           <p className="font-semibold text-text">Cases de Sucesso em {category.name}</p>
           <p className="mt-1 text-sm text-text-muted">
-            Relatórios e resultados de auditorias de infraestrutura realizados por operadores homologados.
+            Relatórios e resultados de auditorias de alta precisão realizados por operadores homologados.
           </p>
         </div>
       )}
@@ -112,7 +121,7 @@ export function CategoryView({
       {activeTab === "insights" && category.editorial?.overview_body && (
         <div className="rounded-card border border-border bg-surface p-6 sm:p-8">
           <h2 className="text-xl font-bold text-text">
-            {category.editorial.overview_title || "Visão Geral do Setor"}
+            {category.editorial.overview_title || t("categories.tabs.insights")}
           </h2>
           <p className="mt-3 text-[14px] leading-relaxed text-text-muted">
             {category.editorial.overview_body}
@@ -146,7 +155,14 @@ export function CategoryView({
         />
       )}
 
-      {/* 8. Conversion Bottom CTA */}
+      {/* 8. Sponsored Footer Banner (OEST Ads: category.footer_above) */}
+      <BannerSlot
+        placement="category.footer_above"
+        category={category.slug}
+        variant="footer"
+      />
+
+      {/* 9. Conversion Bottom CTA */}
       <CategoryCTA
         title={category.cta.title}
         description={category.cta.description}

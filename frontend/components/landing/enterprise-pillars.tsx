@@ -1,17 +1,34 @@
-const pillars = [
-  ["01", "De local para escalável", "Conecte uma demanda distribuída a uma operação coordenada."],
-  ["02", "De manual para orquestrado", "Substitua fluxos dispersos por uma missão com contexto e acompanhamento."],
-  ["03", "De pontual para padronizado", "Defina a entrega que seu time precisa repetir, comparar e integrar."],
-];
+"use client";
+
+import { useTranslations } from "@/lib/i18n/client";
 
 export function EnterprisePillars() {
+  const { locale } = useTranslations();
+  const isEn = locale === "en";
+
+  const pillars = isEn
+    ? [
+        ["01", "From local to scalable", "Connect distributed aerial demand to a coordinated, certified flight network."],
+        ["02", "From manual to orchestrated", "Replace fragmented vendor communication with structured technical missions."],
+        ["03", "From ad-hoc to standardized", "Standardize GIS/BIM reality data packages for repeatable analytics."],
+      ]
+    : [
+        ["01", "De local para escalável", "Conecte uma demanda distribuída a uma operação coordenada."],
+        ["02", "De manual para orquestrado", "Substitua fluxos dispersos por uma missão com contexto e acompanhamento."],
+        ["03", "De pontual para padronizado", "Defina a entrega que seu time precisa repetir, comparar e integrar."],
+      ];
+
   return (
     <section className="bg-oest-ink py-24 text-white sm:py-32">
       <div className="mx-auto max-w-[1320px] px-6 lg:px-8">
         <div className="mx-auto max-w-[940px] text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-oest-ice">Infraestrutura operacional</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-oest-ice">
+            {isEn ? "Operational Infrastructure" : "Infraestrutura operacional"}
+          </p>
           <h2 className="mt-5 text-[42px] font-bold leading-[0.96] tracking-[-0.045em] sm:text-[56px] lg:text-[68px]">
-            Transforme voos isolados em um fluxo contínuo de dados.
+            {isEn
+              ? "Turn isolated flights into a continuous reality data pipeline."
+              : "Transforme voos isolados em um fluxo contínuo de dados."}
           </h2>
         </div>
         <div className="mt-16 grid gap-10 md:grid-cols-3 md:gap-14 lg:gap-20">
