@@ -8,6 +8,7 @@ module Api
         def show
           org = current_organization
           profile = Operators::OperatorProfile.find_by(organization_id: org.id)
+          onboarding = profile&.operator_onboarding_profile
 
           drones_count = Operators::Drone.where(organization_id: org.id, status: "active").count rescue 0
           coverage_count = if profile
@@ -22,6 +23,13 @@ module Api
                            end
 
           items = [
+            {
+              id: "onboarding",
+              label: "Completar cadastro operacional",
+              label_en: "Complete operational onboarding",
+              done: onboarding&.ready_to_submit? == true,
+              href: "/operator/onboarding"
+            },
             {
               id: "profile",
               label: "Completar perfil (headline)",

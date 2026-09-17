@@ -69,7 +69,25 @@ Rails.application.routes.draw do
       end
 
       namespace :operator do
+        get "dashboard", to: "dashboard#show"
         resource :profile, only: %i[show update]
+        resource :onboarding, only: %i[show], controller: "onboarding"
+        patch "onboarding/:section", to: "onboarding#update_section"
+        resource :payout_profile, only: %i[show update], controller: "payout_profiles"
+        resources :invites, only: %i[index] do
+          member do
+            post :accept
+            post :decline
+          end
+        end
+        resources :associated_operators, only: %i[index create update destroy] do
+          collection do
+            post :import
+          end
+        end
+        resources :contracts, only: %i[index]
+        resources :support_requests, only: %i[create]
+        resources :invoices, only: %i[index]
         namespace :fleet do
           resources :drones, only: %i[index create update destroy]
           resources :payloads, only: %i[index create update destroy]
@@ -95,6 +113,28 @@ Rails.application.routes.draw do
         resources :quote_requests, only: %i[index], controller: "quote_requests"
         get "analytics", to: "analytics#show"
         resource :connect, only: %i[show create], controller: "connect"
+      end
+
+      # Enterprise workspace. These endpoints only accept an enterprise user
+      # operating an enterprise organization; the check lives in the namespace
+      # base controller, not in the Next.js route.
+      namespace :enterprise do
+        get "dashboard", to: "dashboard#show"
+        resource :profile, only: %i[show update]
+        resources :api_keys, only: %i[index create] do
+          member do
+            post :activate
+            post :revoke
+            post :cancel
+          end
+        end
+        resources :orders, only: %i[index show create update] do
+          member do
+            post :cancel
+            get :delivery
+          end
+        end
+        resources :invoices, only: %i[index]
       end
 
       resources :projects do

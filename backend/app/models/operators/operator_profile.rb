@@ -7,6 +7,10 @@ module Operators
     KINDS = %w[solo company].freeze
 
     belongs_to :organization
+    has_one :operator_onboarding_profile, class_name: "Operators::OnboardingProfile", dependent: :destroy
+    has_many :mission_invites, class_name: "Operators::MissionInvite", dependent: :destroy
+    has_many :associated_operators, class_name: "Operators::AssociatedOperator", dependent: :destroy
+    has_many :operator_contracts, class_name: "Operators::OperatorContract", dependent: :destroy
     has_many :service_offerings, class_name: "Marketplace::ServiceOffering", dependent: :destroy
     has_many :coverage_areas, class_name: "Operators::CoverageArea", dependent: :destroy
     has_many :operator_data_products, class_name: "Operators::OperatorDataProduct", dependent: :destroy
