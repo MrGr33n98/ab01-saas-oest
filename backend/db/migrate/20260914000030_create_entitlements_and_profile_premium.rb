@@ -15,6 +15,34 @@ class CreateEntitlementsAndProfilePremium < ActiveRecord::Migration[7.2]
     end
     add_index :feature_definitions, :key, unique: true
 
+    # Ensure plans table exists
+    unless table_exists?(:plans)
+      create_table :plans, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
+        t.string :slug, limit: 40
+        t.string :name, limit: 80, null: false
+        t.string :audience, limit: 32, default: "operator"
+        t.integer :price_monthly_cents, default: 0
+        t.string :currency, limit: 3, default: "BRL"
+        t.boolean :active, default: true, null: false
+        t.jsonb :features_json, default: {}, null: false
+        t.string :stripe_price_id, limit: 120
+        t.timestamps
+      end
+      add_index :plans, :slug, unique: true
+    end
+
+    # Ensure subscriptions table exists
+    unless table_exists?(:subscriptions)
+      create_table :subscriptions, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
+        t.references :organization, type: :uuid, null: false, foreign_key: true
+        t.references :plan, type: :uuid, null: false, foreign_key: true
+        t.string :status, limit: 32, default: "active", null: false
+        t.datetime :current_period_end
+        t.string :stripe_subscription_id, limit: 120
+        t.timestamps
+      end
+    end
+
     # Plan → feature matrix
     create_table :plan_features, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
       t.references :plan, type: :uuid, null: false, foreign_key: true
@@ -109,7 +137,6 @@ class CreateEntitlementsAndProfilePremium < ActiveRecord::Migration[7.2]
       t.boolean :published, null: false, default: true
       t.timestamps
     end
-    add_index :operator_materials, :operator_profile_id
 
     # Lead: request quote from public profile (paid feature)
     create_table :quote_requests, id: :uuid, default: -> { "gen_random_uuid()" } do |t|

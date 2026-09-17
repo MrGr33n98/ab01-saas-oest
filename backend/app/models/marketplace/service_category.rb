@@ -5,13 +5,13 @@ module Marketplace
     self.table_name = "service_categories"
 
     # Status State Machine Enum
-    enum status: {
+    enum :status, {
       draft: "draft",
       review: "review",
       scheduled: "scheduled",
       published: "published",
       archived: "archived"
-    }, _default: "draft"
+    }, default: :draft
 
     # Associations
     belongs_to :parent, class_name: "Marketplace::ServiceCategory", optional: true

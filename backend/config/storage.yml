@@ -1,0 +1,31 @@
+test:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+local:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+minio:
+  service: S3
+  access_key_id: <%= ENV.fetch("MINIO_ROOT_USER", "dronehub") %>
+  secret_access_key: <%= ENV.fetch("MINIO_ROOT_PASSWORD", "dronehubsecret") %>
+  region: us-east-1
+  bucket: <%= ENV.fetch("STORAGE_BUCKET", "dronehub-mvp") %>
+  endpoint: <%= ENV.fetch("STORAGE_ENDPOINT", "http://localhost:9000") %>
+  force_path_style: true
+
+amazon:
+  service: S3
+  access_key_id: <%= ENV["AWS_ACCESS_KEY_ID"] %>
+  secret_access_key: <%= ENV["AWS_SECRET_ACCESS_KEY"] %>
+  region: <%= ENV.fetch("AWS_REGION", "us-east-1") %>
+  bucket: <%= ENV["AWS_STORAGE_BUCKET"] %>
+
+cloudflare_r2:
+  service: S3
+  access_key_id: <%= ENV["R2_ACCESS_KEY_ID"] %>
+  secret_access_key: <%= ENV["R2_SECRET_ACCESS_KEY"] %>
+  region: auto
+  bucket: <%= ENV["R2_STORAGE_BUCKET"] %>
+  endpoint: <%= ENV["R2_ENDPOINT"] %>

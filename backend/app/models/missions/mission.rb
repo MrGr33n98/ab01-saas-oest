@@ -14,7 +14,6 @@ module Missions
     belongs_to :project, class_name: "Projects::Project"
     belongs_to :created_by, class_name: "User"
     has_many :mission_products, class_name: "Missions::MissionProduct", dependent: :destroy
-    has_one :mission_requirements, class_name: "Missions::MissionRequirement", dependent: :destroy
     has_many :status_events, class_name: "Missions::MissionStatusEvent", dependent: :destroy
     has_many :quotes, class_name: "Quotes::Quote", dependent: :restrict_with_exception
     has_one :order, class_name: "Orders::Order", dependent: :restrict_with_exception

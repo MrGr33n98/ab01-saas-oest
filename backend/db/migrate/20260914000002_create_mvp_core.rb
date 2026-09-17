@@ -108,12 +108,15 @@ class CreateMvpCore < ActiveRecord::Migration[7.2]
       t.references :operator_profile, type: :uuid, null: false, foreign_key: true
       t.string :name, limit: 140
       t.string :country_code, limit: 2, default: "BR"
-      t.string :state_code, limit: 12
-      t.geography :geometry, limit: { srid: 4326, type: "multi_polygon" }
+      if extension_enabled?("postgis")
+        t.geography :geometry, limit: { srid: 4326, type: "multi_polygon" }
+      else
+        t.jsonb :geometry, default: {}
+      end
       t.boolean :active, null: false, default: true
       t.timestamps
     end
-    add_index :coverage_areas, :geometry, using: :gist
+    add_index :coverage_areas, :geometry, using: :gist if extension_enabled?("postgis")
 
     create_table :projects, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
       t.references :organization, type: :uuid, null: false, foreign_key: true
@@ -138,8 +141,13 @@ class CreateMvpCore < ActiveRecord::Migration[7.2]
       t.string :country_code, limit: 2, default: "BR"
       t.string :state_code, limit: 12
       t.string :city, limit: 120
-      t.geography :centroid, limit: { srid: 4326, type: "point" }
-      t.geography :geometry, limit: { srid: 4326, type: "multi_polygon" }
+      if extension_enabled?("postgis")
+        t.geography :centroid, limit: { srid: 4326, type: "point" }
+        t.geography :geometry, limit: { srid: 4326, type: "multi_polygon" }
+      else
+        t.jsonb :centroid, default: {}
+        t.jsonb :geometry, default: {}
+      end
       t.decimal :area_hectares, precision: 14, scale: 4
       t.datetime :preferred_start_at
       t.datetime :deadline_at
@@ -153,7 +161,7 @@ class CreateMvpCore < ActiveRecord::Migration[7.2]
       t.integer :lock_version, null: false, default: 0
       t.timestamps
     end
-    add_index :missions, :geometry, using: :gist
+    add_index :missions, :geometry, using: :gist if extension_enabled?("postgis")
     add_index :missions, %i[organization_id status]
 
     create_table :mission_products, id: :uuid, default: -> { "gen_random_uuid()" } do |t|

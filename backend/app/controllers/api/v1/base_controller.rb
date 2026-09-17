@@ -13,13 +13,34 @@ module Api
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
       rescue_from ActionController::ParameterMissing, with: :bad_request
 
-      attr_reader :current_organization, :current_membership
+      attr_reader :current_organization, :current_membership, :current_api_key
 
       private
 
       def authenticate_user!
         auth = request.headers["Authorization"].to_s
         token = auth.split(" ").last
+        api_key_header = request.headers["X-Api-Key"].presence
+
+        raw_api_key = token if token.to_s.start_with?("dh_live_", "dh_test_")
+        raw_api_key ||= api_key_header if api_key_header.to_s.start_with?("dh_live_", "dh_test_")
+
+        if raw_api_key.present?
+          @current_api_key = authenticate_api_key(raw_api_key)
+          if @current_api_key
+            @current_organization = @current_api_key.organization
+            @current_user = @current_api_key.requested_by
+            @current_membership = OrganizationMembership.active.find_by(
+              organization_id: @current_organization.id,
+              user_id: @current_user.id
+            )
+            @current_api_key.update_column(:last_used_at, Time.current)
+            return
+          else
+            return render_error(status: 401, code: "INVALID_API_KEY", title: "Invalid or expired API key")
+          end
+        end
+
         @current_user = decode_access_user(token) if token.present?
 
         if @current_user.nil? &&
@@ -30,6 +51,26 @@ module Api
         end
 
         render_error(status: 401, code: "UNAUTHENTICATED", title: "Unauthenticated") unless @current_user
+      end
+
+      def authenticate_api_key(raw_secret)
+        prefix = raw_secret.to_s.first(16)
+        digest = Enterprises::ApiKey.digest(raw_secret)
+        api_key = Enterprises::ApiKey.find_by(prefix: prefix, token_digest: digest, status: "active")
+        return nil if api_key.nil? || api_key.expired?
+        api_key
+      end
+
+      def require_api_scope!(required_scope)
+        return unless @current_api_key
+        scopes = Array(@current_api_key.scopes)
+        unless scopes.include?(required_scope.to_s)
+          render_error(
+            status: 403,
+            code: "INSUFFICIENT_SCOPE",
+            title: "API key lacks required scope: #{required_scope}"
+          )
+        end
       end
 
       def jwt_secret
@@ -57,7 +98,25 @@ module Api
         @current_user
       end
 
+      # UI routing is not a security boundary. Every tenant-specific controller
+      # must verify both the authenticated user's primary workspace and the
+      # selected organization before reading or mutating private data.
+      def require_tenant_context!(tenant_type)
+        tenant_type = tenant_type.to_s
+        valid_user = current_user&.user_type == tenant_type || current_user&.platform_admin?
+        valid_org = current_organization&.organization_type == "enterprise" || current_organization&.tenant_type == tenant_type
+        return if valid_user && valid_org
+
+        render_error(
+          status: 403,
+          code: "TENANT_TYPE_FORBIDDEN",
+          title: "This workspace is not available for the active tenant"
+        )
+      end
+
       def resolve_organization!
+        return if @current_api_key # Automatically resolved from API key
+
         org_id = request.headers["X-Organization-Id"]
         return render_error(status: 400, code: "ORG_REQUIRED", title: "Organization required") if org_id.blank?
 

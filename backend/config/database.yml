@@ -1,10 +1,10 @@
 default: &default
-  adapter: postgis
+  adapter: <%= ENV.fetch("DATABASE_ADAPTER", "postgresql") %>
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: <%= ENV.fetch("POSTGRES_USER", "dronehub") %>
-  password: <%= ENV.fetch("POSTGRES_PASSWORD", "dronehub") %>
-  host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
+  username: <%= ENV.fetch("POSTGRES_USER", "postgres") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "postgres") %>
+  host: <%= ENV.fetch("POSTGRES_HOST", "127.0.0.1") %>
   port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
 
 development:

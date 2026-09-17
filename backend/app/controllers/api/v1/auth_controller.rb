@@ -17,6 +17,7 @@ module Api
 
         user = nil
         org = nil
+        user_type = normalized_user_type
         ActiveRecord::Base.transaction do
           user = User.create!(
             email: email,
@@ -25,13 +26,14 @@ module Api
             last_name: params[:last_name],
             accepted_terms_at: Time.current,
             accepted_privacy_at: Time.current,
-            jti: SecureRandom.uuid
+            jti: SecureRandom.uuid,
+            user_type: user_type
           )
           org_name = params[:organization_name].presence || "#{user.first_name || 'Org'} Workspace"
           org = Organization.create!(
             name: org_name,
             slug: unique_slug(org_name),
-            organization_type: params[:organization_type].presence || "customer",
+            organization_type: organization_type_for(user_type),
             country_code: "BR"
           )
           OrganizationMembership.create!(
@@ -41,7 +43,7 @@ module Api
             status: "active",
             joined_at: Time.current
           )
-          if org.organization_type.to_s.in?(%w[drone_operator operator])
+          if user.operator?
             Operators::OperatorProfile.create!(
               organization: org,
               slug: org.slug,
@@ -64,7 +66,7 @@ module Api
         render json: {
           data: {
             user: user_payload(user),
-            organization: { id: org.id, name: org.name, slug: org.slug, organization_type: org.organization_type },
+            organization: organization_payload(org),
             tokens: tokens
           },
           meta: { request_id: @request_id }
@@ -86,7 +88,7 @@ module Api
           data: {
             user: user_payload(user),
             organizations: memberships.map { |m|
-              { id: m.organization_id, name: m.organization.name, role: m.role, slug: m.organization.slug }
+              organization_payload(m.organization).merge(role: m.role)
             },
             tokens: issue_tokens(user)
           },
@@ -197,7 +199,7 @@ module Api
           data: {
             user: user_payload(user),
             organizations: memberships.map { |m|
-              { id: m.organization_id, name: m.organization.name, role: m.role }
+              organization_payload(m.organization).merge(role: m.role)
             }
           },
           meta: { request_id: @request_id }
@@ -274,8 +276,36 @@ module Api
           first_name: user.first_name,
           last_name: user.last_name,
           platform_role: user.platform_role,
+          user_type: user.user_type,
           email_verified: user.respond_to?(:email_verified_at) && user.email_verified_at.present?
         }
+      end
+
+      def organization_payload(org)
+        {
+          id: org.id,
+          name: org.name,
+          slug: org.slug,
+          role: nil,
+          organization_type: org.organization_type,
+          tenant_type: org.tenant_type
+        }.compact
+      end
+
+      def normalized_user_type
+        requested = params[:user_type].presence || params[:tenant_type].presence || params[:organization_type].presence
+        case requested.to_s
+        when "operator", "drone_operator"
+          "operator"
+        when "enterprise", "customer", "data_company", "engineering_company", "survey_company", "government", "research", ""
+          "enterprise"
+        else
+          raise ActionController::ParameterMissing, "user_type must be operator or enterprise"
+        end
+      end
+
+      def organization_type_for(user_type)
+        user_type == "operator" ? "drone_operator" : "enterprise"
       end
 
       def unique_slug(name)
