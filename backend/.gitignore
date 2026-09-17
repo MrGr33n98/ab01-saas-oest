@@ -1,0 +1,6 @@
+
+# rails-ai-context / local MCP config
+.codex/config.toml
+
+# rails-ai-context (JSON cache - markdown files should be committed)
+.ai-context.json

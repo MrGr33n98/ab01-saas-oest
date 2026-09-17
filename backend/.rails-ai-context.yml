@@ -1,0 +1,5 @@
+---
+ai_tools:
+- cursor
+- codex
+tool_mode: mcp

@@ -107,3 +107,9 @@ tmp/
 test-results/
 playwright-report/
 blob-report/
+examples.txt
+backend/spec/examples.txt
+
+# --- Local Agent/MCP Configs ---
+.agents/mcp_config.json
+
