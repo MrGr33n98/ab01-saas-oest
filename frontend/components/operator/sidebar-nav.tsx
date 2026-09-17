@@ -5,6 +5,10 @@ import Link from "next/link";
 import {
   LayoutDashboard,
   Briefcase,
+  Building2,
+  CircleHelp,
+  ClipboardList,
+  FileSignature,
   FileText,
   Plane,
   Users,
@@ -23,9 +27,11 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/operator", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/operator/jobs", label: "Jobs abertos", icon: Briefcase },
+  { href: "/operator/onboarding", label: "Meu perfil", icon: ClipboardList },
+  { href: "/operator/invites", label: "Meus convites", icon: Briefcase },
+  { href: "/operator/jobs", label: "Jobs abertos", icon: FileText },
   { href: "/operator/proposals", label: "Propostas", icon: FileText },
-  { href: "/operator/missions", label: "Missões ativas", icon: Crosshair },
+  { href: "/operator/missions", label: "Pedidos & missões", icon: Crosshair },
   { href: "/operator/portfolio", label: "Portfólio & Amostras", icon: Layers },
   { href: "/operator/fleet", label: "Frota", icon: Plane },
   { href: "/operator/pilots", label: "Pilotos", icon: Users },
@@ -33,15 +39,19 @@ const NAV = [
   { href: "/operator/coverage", label: "Cobertura", icon: Map },
   { href: "/operator/compliance", label: "Compliance", icon: ShieldCheck },
   { href: "/operator/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/operator/payments", label: "Pagamentos", icon: Wallet },
-  { href: "/operator/settings", label: "Configurações & Wizard", icon: Settings },
+  { href: "/operator/invoices", label: "Faturas", icon: Wallet },
+  { href: "/operator/bank-information", label: "Dados bancários", icon: Building2 },
+  { href: "/operator/associated-operators", label: "Operadores associados", icon: Users },
+  { href: "/operator/contracts", label: "Contratos", icon: FileSignature },
+  { href: "/operator/support", label: "Suporte", icon: CircleHelp },
+  { href: "/operator/settings", label: "Configurações", icon: Settings },
 ];
 
 export function OperatorSidebarNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-1 flex-col gap-1 p-3">
+    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
       {NAV.map((item) => {
         const active = item.exact
           ? pathname === item.href
