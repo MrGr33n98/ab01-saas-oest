@@ -14,6 +14,409 @@ security:
   - organizationId: []
 
 paths:
+  /auth/sign_up:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Create an operator or enterprise tenant
+      operationId: signUp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignUpRequest"
+      responses:
+        "201":
+          description: User, organization and session tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /auth/sign_in:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Sign in and return memberships with tenant classification
+      operationId: signIn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+      responses:
+        "200":
+          description: Authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /me:
+    get:
+      tags: [Auth]
+      summary: Get the signed-in user and active memberships
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current identity and memberships
+
+  /enterprise/dashboard:
+    get:
+      tags: [Enterprise]
+      summary: Get enterprise dashboard aggregate
+      operationId: getEnterpriseDashboard
+      description: Requires an `enterprise` user and an enterprise `X-Organization-Id` context.
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnterpriseDashboardResponse"
+        "403":
+          $ref: "#/components/responses/TenantTypeForbidden"
+
+  /enterprise/profile:
+    get:
+      tags: [Enterprise]
+      summary: Get enterprise and owner profile
+      operationId: getEnterpriseProfile
+      responses:
+        "200":
+          description: Profile payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnterpriseProfileResponse"
+    patch:
+      tags: [Enterprise]
+      summary: Update enterprise and owner profile
+      operationId: updateEnterpriseProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEnterpriseProfileRequest"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnterpriseProfileResponse"
+        "403":
+          description: Enterprise owner or admin membership required
+
+  /enterprise/api_keys:
+    get:
+      tags: [Enterprise]
+      summary: List API key metadata without secrets
+      operationId: listEnterpriseApiKeys
+      responses:
+        "200":
+          description: API key metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnterpriseApiKeyListResponse"
+    post:
+      tags: [Enterprise]
+      summary: Request an API key for approval
+      operationId: requestEnterpriseApiKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, maxLength: 120 }
+                scopes:
+                  type: array
+                  items: { $ref: "#/components/schemas/EnterpriseApiScope" }
+                expires_at: { type: string, format: date-time, nullable: true }
+      responses:
+        "202":
+          description: Request awaiting platform approval
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnterpriseApiKeyResponse"
+
+  /enterprise/api_keys/{id}/activate:
+    post:
+      tags: [Enterprise]
+      summary: One-time activation of an approved API key
+      operationId: activateEnterpriseApiKey
+      description: The response's `secret` is never returned again and must be stored by the caller immediately.
+      parameters:
+        - $ref: "#/components/parameters/ApiKeyId"
+      responses:
+        "201":
+          description: Active key and one-time secret
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnterpriseApiKeySecretResponse"
+        "409":
+          description: Key is not approved
+
+  /enterprise/api_keys/{id}/revoke:
+    post:
+      tags: [Enterprise]
+      summary: Revoke an approved or active API key
+      operationId: revokeEnterpriseApiKey
+      parameters:
+        - $ref: "#/components/parameters/ApiKeyId"
+      responses:
+        "200":
+          description: Revoked key metadata
+
+  /enterprise/api_keys/{id}/cancel:
+    post:
+      tags: [Enterprise]
+      summary: Cancel a still-pending API key request
+      operationId: cancelEnterpriseApiKey
+      parameters:
+        - $ref: "#/components/parameters/ApiKeyId"
+      responses:
+        "200":
+          description: Cancelled key metadata
+
+  /enterprise/invoices:
+    get:
+      tags: [Enterprise]
+      summary: List payment records for the enterprise
+      operationId: listEnterpriseInvoices
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [all, pending, paid, failed] }
+      responses:
+        "200":
+          description: Payment records used by the invoices screen
+
+  /operator/dashboard:
+    get:
+      tags: [Operator]
+      summary: Get the Operator dashboard projection
+      operationId: getOperatorDashboard
+      description: Requires an `operator` user and a drone-operator `X-Organization-Id` context.
+      responses:
+        "200":
+          description: Operator metrics, onboarding stages, invites and notifications
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperatorDashboardResponse" }
+        "403": { $ref: "#/components/responses/TenantTypeForbidden" }
+
+  /operator/onboarding:
+    get:
+      tags: [Operator]
+      summary: Read a resumable six-section Operator onboarding aggregate
+      operationId: getOperatorOnboarding
+      responses:
+        "200":
+          description: Current onboarding state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperatorOnboardingResponse" }
+
+  /operator/onboarding/{section}:
+    patch:
+      tags: [Operator]
+      summary: Save one independently resumable onboarding section
+      operationId: updateOperatorOnboardingSection
+      parameters:
+        - name: section
+          in: path
+          required: true
+          schema: { type: string, enum: [address, equipment, business, experience, documents, pricing] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "200":
+          description: Recalculated onboarding aggregate; client completion flags are ignored.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperatorOnboardingResponse" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /operator/payout_profile:
+    get:
+      tags: [Operator]
+      summary: Get redacted Operator payout metadata
+      operationId: getOperatorPayoutProfile
+      responses:
+        "200":
+          description: Payout profile, never with a full bank account number
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperatorPayoutProfileResponse" }
+    patch:
+      tags: [Operator]
+      summary: Save payout and billing metadata
+      operationId: updateOperatorPayoutProfile
+      description: Account numbers are transient request data. The API retains only `bank_account_last4` and an optional provider token/reference.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                account_kind: { type: string, enum: [business, personal] }
+                payout_provider: { type: string }
+                payout_provider_reference: { type: string }
+                paypal_email: { type: string, format: email }
+                billing: { type: object, additionalProperties: true }
+                bank_account:
+                  type: object
+                  properties:
+                    account_holder_name: { type: string }
+                    account_number: { type: string, writeOnly: true }
+                    bank_name: { type: string }
+                    swift_bic: { type: string }
+      responses:
+        "200":
+          description: Redacted payout profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperatorPayoutProfileResponse" }
+
+  /operator/invites:
+    get:
+      tags: [Operator]
+      summary: List mission invites addressed to the active Operator profile
+      operationId: listOperatorInvites
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [pending, accepted, declined, expired, cancelled] }
+      responses:
+        "200":
+          description: Operator mission inbox
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/OperatorInvite" }
+
+  /operator/invites/{id}/accept:
+    post:
+      tags: [Operator]
+      summary: Accept a pending, unexpired mission invite exactly once
+      operationId: acceptOperatorInvite
+      parameters: [{ $ref: "#/components/parameters/OperatorInviteId" }]
+      responses:
+        "200": { description: Accepted invite }
+        "422": { description: Invite is expired or has already been answered }
+
+  /operator/invites/{id}/decline:
+    post:
+      tags: [Operator]
+      summary: Decline a pending, unexpired mission invite exactly once
+      operationId: declineOperatorInvite
+      parameters: [{ $ref: "#/components/parameters/OperatorInviteId" }]
+      responses:
+        "200": { description: Declined invite }
+        "422": { description: Invite is expired or has already been answered }
+
+  /operator/associated_operators:
+    get:
+      tags: [Operator]
+      summary: List the Operator's associated drone-operator network
+      operationId: listAssociatedOperators
+      responses:
+        "200": { description: Associated operator list }
+    post:
+      tags: [Operator]
+      summary: Add an associated drone operator manually
+      operationId: createAssociatedOperator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssociatedOperatorInput" }
+      responses:
+        "201": { description: Associated operator created }
+
+  /operator/associated_operators/import:
+    post:
+      tags: [Operator]
+      summary: Import locally parsed CSV rows into the associated operator network
+      operationId: importAssociatedOperators
+      description: The browser parses source CSV and submits structured rows; the source file itself is not retained.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rows]
+              properties:
+                rows:
+                  type: array
+                  maxItems: 500
+                  items: { $ref: "#/components/schemas/AssociatedOperatorInput" }
+      responses:
+        "201": { description: Imported associated operators }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /operator/contracts:
+    get:
+      tags: [Operator]
+      summary: List Operator platform contracts
+      operationId: listOperatorContracts
+      responses:
+        "200": { description: Contract metadata }
+
+  /operator/support_requests:
+    post:
+      tags: [Operator]
+      summary: Open an Operator support request
+      operationId: createOperatorSupportRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subject, message]
+              properties:
+                subject: { type: string, maxLength: 240 }
+                message: { type: string }
+                category: { type: string, enum: [general, onboarding, payments, mission, technical] }
+                priority: { type: string, enum: [low, normal, high, urgent] }
+      responses:
+        "201": { description: Support request created }
+
+  /operator/invoices:
+    get:
+      tags: [Operator]
+      summary: List Operator payout ledger entries
+      operationId: listOperatorInvoices
+      responses:
+        "200": { description: Payout ledger entries }
   /missions:
     get:
       summary: List missions for current organization
@@ -129,8 +532,253 @@ components:
       in: header
       required: true
       schema: { type: string }
+    ApiKeyId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    OperatorInviteId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
 
   schemas:
+    SignUpRequest:
+      type: object
+      required: [email, password, accepted_terms, user_type]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 8 }
+        first_name: { type: string }
+        last_name: { type: string }
+        organization_name: { type: string }
+        user_type:
+          type: string
+          enum: [operator, enterprise]
+          description: Primary product workspace. `platform_role` is not client-controlled.
+        organization_type:
+          type: string
+          deprecated: true
+          description: Legacy alias; `drone_operator` maps to operator and customer-like values map to enterprise.
+        profile_kind: { type: string, enum: [solo, company] }
+        accepted_terms: { type: boolean, const: true }
+    AuthUser:
+      type: object
+      required: [id, email, user_type]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        first_name: { type: string, nullable: true }
+        last_name: { type: string, nullable: true }
+        platform_role: { type: string }
+        user_type: { type: string, enum: [operator, enterprise] }
+        email_verified: { type: boolean }
+    OrganizationMembership:
+      type: object
+      required: [id, name, organization_type, tenant_type]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        role: { type: string }
+        organization_type: { type: string }
+        tenant_type: { type: string, enum: [operator, enterprise] }
+    AuthTokens:
+      type: object
+      required: [access_token, token_type, expires_in]
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        token_type: { type: string, example: Bearer }
+        expires_in: { type: integer, example: 900 }
+    AuthResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            user: { $ref: "#/components/schemas/AuthUser" }
+            organization: { $ref: "#/components/schemas/OrganizationMembership" }
+            organizations:
+              type: array
+              items: { $ref: "#/components/schemas/OrganizationMembership" }
+            tokens: { $ref: "#/components/schemas/AuthTokens" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    EnterpriseProfile:
+      type: object
+      properties:
+        industry: { type: string, nullable: true }
+        phone_e164: { type: string, nullable: true }
+        billing_email: { type: string, format: email, nullable: true }
+        payment_currency: { type: string, example: BRL }
+        billing_address: { type: object, additionalProperties: true }
+        email_notifications: { type: boolean }
+    EnterpriseProfileResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            user: { $ref: "#/components/schemas/AuthUser" }
+            organization: { $ref: "#/components/schemas/OrganizationMembership" }
+            profile: { $ref: "#/components/schemas/EnterpriseProfile" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    UpdateEnterpriseProfileRequest:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            first_name: { type: string }
+            last_name: { type: string }
+            email: { type: string, format: email }
+        organization:
+          type: object
+          properties:
+            name: { type: string }
+            legal_name: { type: string }
+            tax_id: { type: string }
+            email: { type: string, format: email }
+            country_code: { type: string, minLength: 2, maxLength: 2 }
+            state_code: { type: string }
+            city: { type: string }
+        profile: { $ref: "#/components/schemas/EnterpriseProfile" }
+    EnterpriseDashboardResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            organization: { $ref: "#/components/schemas/OrganizationMembership" }
+            total_orders: { type: integer }
+            profile_completion:
+              type: object
+              properties:
+                percentage: { type: integer, minimum: 0, maximum: 100 }
+                complete: { type: boolean }
+                fields: { type: object, additionalProperties: { type: boolean } }
+            orders_overview: { $ref: "#/components/schemas/StatusOverview" }
+            missions_overview: { $ref: "#/components/schemas/StatusOverview" }
+            recent_notifications:
+              type: array
+              items: { type: object }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    StatusOverview:
+      type: object
+      properties:
+        unconfirmed: { type: integer }
+        confirmed: { type: integer }
+        active: { type: integer }
+        completed: { type: integer }
+    EnterpriseApiScope:
+      type: string
+      enum: [missions:read, missions:write, orders:read, deliverables:read, webhooks:read, webhooks:write]
+    EnterpriseApiKey:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        prefix: { type: string, nullable: true, example: dh_live_3bzP }
+        scopes:
+          type: array
+          items: { $ref: "#/components/schemas/EnterpriseApiScope" }
+        status: { type: string, enum: [requested, approved, active, revoked, cancelled] }
+        requested_at: { type: string, format: date-time }
+        approved_at: { type: string, format: date-time, nullable: true }
+        activated_at: { type: string, format: date-time, nullable: true }
+        last_used_at: { type: string, format: date-time, nullable: true }
+        expires_at: { type: string, format: date-time, nullable: true }
+    EnterpriseApiKeyResponse:
+      type: object
+      properties:
+        data: { $ref: "#/components/schemas/EnterpriseApiKey" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    EnterpriseApiKeyListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/EnterpriseApiKey" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    EnterpriseApiKeySecretResponse:
+      type: object
+      properties:
+        data:
+          allOf:
+            - $ref: "#/components/schemas/EnterpriseApiKey"
+            - type: object
+              required: [secret]
+              properties:
+                secret:
+                  type: string
+                  description: Returned once only; it is not persisted in clear text.
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    OperatorOnboarding:
+      type: object
+      required: [status, completion_percentage, completed_sections, ready_to_submit, sections]
+      properties:
+        status: { type: string, enum: [draft, ready, submitted, approved, rejected] }
+        completion_percentage: { type: integer, minimum: 0, maximum: 100 }
+        completed_sections:
+          type: array
+          items: { type: string, enum: [address, equipment, business, experience, documents, pricing] }
+        ready_to_submit: { type: boolean }
+        sections:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              complete: { type: boolean }
+              data: { type: object, additionalProperties: true }
+    OperatorOnboardingResponse:
+      type: object
+      properties:
+        data: { $ref: "#/components/schemas/OperatorOnboarding" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    OperatorPayoutProfile:
+      type: object
+      properties:
+        configured: { type: boolean }
+        account_kind: { type: string, enum: [business, personal] }
+        billing: { type: object, additionalProperties: true }
+        payout_provider: { type: string }
+        payout_provider_reference: { type: string, nullable: true }
+        account_holder_name: { type: string, nullable: true }
+        bank_name: { type: string, nullable: true }
+        bank_account_last4: { type: string, pattern: '^\\d{4}$', nullable: true }
+        swift_bic: { type: string, nullable: true }
+        paypal_email: { type: string, format: email, nullable: true }
+        verification_status: { type: string, enum: [unverified, pending, verified, rejected] }
+    OperatorPayoutProfileResponse:
+      type: object
+      properties:
+        data: { $ref: "#/components/schemas/OperatorPayoutProfile" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    OperatorInvite:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [pending, accepted, declined, expired, cancelled] }
+        message: { type: string, nullable: true }
+        expires_at: { type: string, format: date-time, nullable: true }
+        mission: { $ref: "#/components/schemas/MissionSummary" }
+    AssociatedOperatorInput:
+      type: object
+      required: [full_name]
+      properties:
+        full_name: { type: string, maxLength: 180 }
+        email: { type: string, format: email }
+        phone_e164: { type: string }
+        company_name: { type: string }
+        country_code: { type: string, minLength: 2, maxLength: 2 }
+        state_code: { type: string }
+        city: { type: string }
+        license_number: { type: string }
+    ResponseMeta:
+      type: object
+      properties:
+        request_id: { type: string }
     CreateMissionRequest:
       type: object
       required: [project_id, title, mission_type]
@@ -205,6 +853,12 @@ components:
         request_id: { type: string }
 
   responses:
+    TenantTypeForbidden:
+      description: The user type and active organization tenant do not match the endpoint.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
     ValidationError:
       description: Semantic validation failed
       content:
