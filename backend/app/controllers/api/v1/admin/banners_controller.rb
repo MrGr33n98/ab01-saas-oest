@@ -66,7 +66,7 @@ module Api
 
         def banner_params
           params.require(:banner).permit(
-            :name, :status, :title, :subtitle, :cta_label, :cta_url, :image_url,
+            :name, :status, :format_type, :eyebrow, :title, :subtitle, :cta_label, :cta_url, :image_url,
             :background_color, :text_color, :starts_at, :ends_at, :priority, :weight,
             :target_audience, :geo_scope, :organization_id,
             targeting: { category_slugs: [], states: [] }
@@ -92,6 +92,8 @@ module Api
             id: banner.id,
             name: banner.name,
             status: banner.status,
+            format_type: banner.format_type,
+            eyebrow: banner.eyebrow,
             title: banner.title,
             subtitle: banner.subtitle,
             cta_label: banner.cta_label,

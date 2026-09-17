@@ -15,7 +15,7 @@ module Ads
       @placement_key = placement_key
       @category_slug = category_slug
       @audience = audience
-      @limit = limit.to_i.clamp(1, 5)
+      @limit = limit.to_i.clamp(1, 10)
     end
 
     def call
@@ -26,7 +26,7 @@ module Ads
         .joins(:banner_placement_assignments)
         .where(banner_placement_assignments: { banner_placement_id: placement.id, active: true })
         .live
-        .order(priority: :desc, weight: :desc)
+        .order(priority: :desc, weight: :desc, updated_at: :desc)
 
       matched = candidates.select { |b| b.matches_context?(category_slug: category_slug, audience: audience) }
       matched.first(limit).map { |b| serialize(b, placement) }
@@ -41,15 +41,19 @@ module Ads
         id: banner.id,
         placement_key: placement.key,
         name: banner.name,
+        format_type: banner.format_type || "standard",
+        eyebrow: banner.eyebrow,
         title: banner.title,
         subtitle: banner.subtitle,
         cta_label: banner.cta_label.presence || "Saiba mais",
         cta_url: banner.cta_url,
         image_url: banner.image_url,
-        background_color: banner.background_color,
-        text_color: banner.text_color,
+        background_color: banner.background_color.presence || "#0D192E",
+        text_color: banner.text_color.presence || "#FFFFFF",
         width_hint: placement.width_hint,
-        height_hint: placement.height_hint
+        height_hint: placement.height_hint,
+        priority: banner.priority,
+        weight: banner.weight
       }
     end
   end
