@@ -53,9 +53,6 @@ module Missions
 
     def to_multipolygon_wkt(type, coordinates)
       if type == "Polygon"
-        rings = coordinates.map { |ring| ring_to_wkt(ring) }.join(", ")
-        "MULTIPOLYGON(((#{rings})))".sub("(((", "(((") # structure: MULTIPOLYGON(((x y, ...)))
-        # Correct WKT:
         ring_wkts = coordinates.map { |ring| "(#{ring_to_wkt(ring)})" }.join(", ")
         "MULTIPOLYGON((#{ring_wkts}))"
       else
@@ -72,36 +69,96 @@ module Missions
     end
 
     def compute_area_m2(wkt)
-      sql = "SELECT ST_Area(ST_GeogFromText($1)) AS area"
-      # Use connection with bound param when available
-      result = ActiveRecord::Base.connection.exec_query(
-        "SELECT ST_Area(ST_GeogFromText(#{ActiveRecord::Base.connection.quote(wkt)})) AS area"
-      )
-      result.first&.fetch("area")&.to_f
-    rescue StandardError
-      # Fallback approximate for environments without live PostGIS during unit tests
-      approximate_area_ha_from_wkt(wkt)&.then { |ha| ha * 10_000.0 }
+      if postgis_available?
+        sql = ActiveRecord::Base.sanitize_sql_array([
+          "SELECT ST_Area(ST_GeogFromText(?)) AS area",
+          wkt
+        ])
+        result = ActiveRecord::Base.connection.exec_query(sql)
+        area = result.first&.fetch("area")&.to_f
+        return area if area.present? && area > 0
+      end
+
+      # Fallback aproximado de bounding box é restrito EXCLUSIVAMENTE a development/test
+      if Rails.env.test? || Rails.env.development?
+        Rails.logger.warn("Calculating approximate bounding-box area in #{Rails.env} mode")
+        fallback_area_m2(wkt)
+      else
+        Rails.logger.error("Spatial calculation engine (PostGIS) unavailable in production")
+        nil
+      end
+    rescue StandardError => e
+      Rails.logger.error("Error calculating area via PostGIS: #{e.message}")
+      Sentry.capture_exception(e) if defined?(Sentry) && Sentry.respond_to?(:initialized?) && Sentry.initialized?
+      if Rails.env.test? || Rails.env.development?
+        fallback_area_m2(wkt)
+      else
+        nil
+      end
     end
 
     def compute_centroid_wkt(wkt)
-      result = ActiveRecord::Base.connection.exec_query(
-        "SELECT ST_AsText(ST_Centroid(ST_GeogFromText(#{ActiveRecord::Base.connection.quote(wkt)})::geometry)) AS c"
-      )
-      result.first&.fetch("c")
-    rescue StandardError
-      nil
+      if postgis_available?
+        sql = ActiveRecord::Base.sanitize_sql_array([
+          "SELECT ST_AsText(ST_Centroid(ST_GeogFromText(?)::geometry)) AS c",
+          wkt
+        ])
+        result = ActiveRecord::Base.connection.exec_query(sql)
+        centroid = result.first&.fetch("c")
+        return centroid if centroid.present?
+      end
+
+      # Em produção: fail-closed se PostGIS estiver indisponível
+      if Rails.env.test? || Rails.env.development?
+        approximate_centroid_from_wkt(wkt)
+      else
+        Rails.logger.error("Centroid calculation engine (PostGIS) unavailable in production")
+        nil
+      end
+    rescue StandardError => e
+      Rails.logger.error("Error calculating centroid via PostGIS: #{e.message}")
+      Sentry.capture_exception(e) if defined?(Sentry) && Sentry.respond_to?(:initialized?) && Sentry.initialized?
+      if Rails.env.test? || Rails.env.development?
+        approximate_centroid_from_wkt(wkt)
+      else
+        nil
+      end
+    end
+
+    def postgis_available?
+      @postgis_available ||= begin
+        res = ActiveRecord::Base.connection.select_value("SELECT 1 FROM pg_extension WHERE extname = 'postgis'")
+        res.present?
+      rescue StandardError => e
+        Rails.logger.error("PostGIS availability check failed: #{e.message}")
+        Sentry.capture_exception(e) if defined?(Sentry) && Sentry.respond_to?(:initialized?) && Sentry.initialized?
+        false
+      end
+    end
+
+    def fallback_area_m2(wkt)
+      approximate_area_ha_from_wkt(wkt)&.then { |ha| ha * 10_000.0 }
     end
 
     def approximate_area_ha_from_wkt(wkt)
-      # Very rough bbox estimate for offline/dev without PostGIS
+      # Very rough bbox estimate strictly for offline/dev without PostGIS
       nums = wkt.scan(/-?\d+\.?\d*/).map(&:to_f)
       return nil if nums.size < 4
       lons = nums.each_slice(2).map(&:first)
       lats = nums.each_slice(2).map(&:last)
-      # degrees to km rough at equator
       width_km = (lons.max - lons.min).abs * 111.0
       height_km = (lats.max - lats.min).abs * 111.0
       (width_km * height_km * 100.0).round(4) # km² * 100 = ha
+    end
+
+    def approximate_centroid_from_wkt(wkt)
+      nums = wkt.scan(/-?\d+\.?\d*/).map(&:to_f)
+      return nil if nums.size < 4
+      lons = nums.each_slice(2).map(&:first)
+      lats = nums.each_slice(2).map(&:last)
+      avg_lon = (lons.sum / lons.size.to_f).round(6)
+      avg_lat = (lats.sum / lats.size.to_f).round(6)
+      "POINT(#{avg_lon} #{avg_lat})"
     end
   end
 end

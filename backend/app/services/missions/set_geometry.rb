@@ -24,30 +24,24 @@ module Missions
         return Result.new(success?: false, mission: mission, errors: calc.errors)
       end
 
-      mission.area_hectares = calc.area_hectares
-      # Store via PostGIS cast when column is geography
-      if mission.respond_to?(:geometry=)
-        mission[:geometry] = calc.geometry_wkt if mission.has_attribute?(:geometry)
-      end
-      mission.save!
+      Missions::Mission.transaction do
+        mission.area_hectares = calc.area_hectares
+        mission.geometry = geojson if mission.respond_to?(:geometry=)
 
-      # Prefer raw SQL update for geography when AR adapter available
-      begin
-        ActiveRecord::Base.connection.execute(<<~SQL.squish)
-          UPDATE missions
-          SET geometry = ST_GeogFromText(#{ActiveRecord::Base.connection.quote(calc.geometry_wkt)}),
-              area_hectares = #{calc.area_hectares},
-              updated_at = NOW()
-          WHERE id = #{ActiveRecord::Base.connection.quote(mission.id)}
-        SQL
-        mission.reload
-      rescue StandardError
-        # keep AR attributes
+        if calc.centroid_wkt.present? && mission.respond_to?(:centroid=)
+          mission.centroid = { "wkt" => calc.centroid_wkt }
+        end
+
+        mission.save!
       end
 
       Result.new(success?: true, mission: mission, errors: [])
     rescue ActiveRecord::RecordInvalid => e
+      mission.reload rescue nil
       Result.new(success?: false, mission: mission, errors: e.record.errors.full_messages)
+    rescue StandardError => e
+      mission.reload rescue nil
+      Result.new(success?: false, mission: mission, errors: [e.message])
     end
 
     private

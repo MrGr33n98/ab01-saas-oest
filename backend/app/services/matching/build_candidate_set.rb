@@ -51,20 +51,43 @@ module Matching
     end
 
     def coverage_profile_ids(profile_ids)
-      quoted = profile_ids.map { |id| ActiveRecord::Base.connection.quote(id) }.join(",")
-      sql = <<~SQL.squish
-        SELECT DISTINCT coverage_areas.operator_profile_id
-        FROM coverage_areas
-        INNER JOIN missions ON missions.id = #{ActiveRecord::Base.connection.quote(mission.id)}
-        WHERE coverage_areas.active = true
-          AND coverage_areas.operator_profile_id IN (#{quoted})
-          AND coverage_areas.geometry IS NOT NULL
-          AND missions.geometry IS NOT NULL
-          AND ST_Intersects(coverage_areas.geometry, missions.geometry)
-      SQL
-      ActiveRecord::Base.connection.exec_query(sql).map { |r| r["operator_profile_id"] }
-    rescue StandardError
-      profile_ids
+      return [] if profile_ids.blank?
+
+      unless postgis_available?
+        Rails.logger.warn("PostGIS extension not available for spatial matching. Environment: #{Rails.env}")
+        # Em test/development sem PostGIS, permite fallback se configurado; em produção SEMPRE fail-closed
+        return (Rails.env.test? || Rails.env.development?) ? profile_ids : []
+      end
+
+      Operators::CoverageArea
+        .active
+        .where(operator_profile_id: profile_ids)
+        .where.not(geometry: [nil, {}, "{}"])
+        .joins(
+          Operators::CoverageArea.sanitize_sql_array([
+            "INNER JOIN missions ON missions.id = ? AND missions.geometry IS NOT NULL AND missions.geometry != '{}'::jsonb AND ST_Intersects(ST_GeomFromGeoJSON(coverage_areas.geometry::text), ST_GeomFromGeoJSON(missions.geometry::text))",
+            mission.id
+          ])
+        )
+        .distinct
+        .pluck(:operator_profile_id)
+    rescue StandardError => e
+      Rails.logger.error("Spatial matching query failed for mission #{mission.id}: #{e.message}")
+      Sentry.capture_exception(e) if defined?(Sentry) && Sentry.respond_to?(:initialized?) && Sentry.initialized?
+
+      # Fail-closed em produção: falha de infraestrutura espacial nunca deve vazar candidatos fora de cobertura
+      (Rails.env.test? || Rails.env.development?) ? profile_ids : []
+    end
+
+    def postgis_available?
+      @postgis_available ||= begin
+        res = ActiveRecord::Base.connection.select_value("SELECT 1 FROM pg_extension WHERE extname = 'postgis'")
+        res.present?
+      rescue StandardError => e
+        Rails.logger.error("PostGIS availability check failed: #{e.message}")
+        Sentry.capture_exception(e) if defined?(Sentry) && Sentry.respond_to?(:initialized?) && Sentry.initialized?
+        false
+      end
     end
   end
 end
