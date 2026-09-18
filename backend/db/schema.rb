@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_09_17_000003) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_18_034000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -335,7 +335,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_17_000003) do
     t.index ["organization_id"], name: "index_enterprise_api_keys_on_organization_id"
     t.index ["prefix"], name: "index_enterprise_api_keys_on_prefix", unique: true, where: "(prefix IS NOT NULL)"
     t.index ["requested_by_id"], name: "index_enterprise_api_keys_on_requested_by_id"
-    t.check_constraint "status::text = ANY (ARRAY['requested'::character varying, 'approved'::character varying, 'active'::character varying, 'revoked'::character varying, 'cancelled'::character varying]::text[])", name: "enterprise_api_keys_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['requested'::character varying::text, 'approved'::character varying::text, 'active'::character varying::text, 'revoked'::character varying::text, 'cancelled'::character varying::text])", name: "enterprise_api_keys_status_check"
   end
 
   create_table "enterprise_profiles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1081,7 +1081,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_17_000003) do
     t.index ["email_verification_token"], name: "index_users_on_email_verification_token", unique: true, where: "(email_verification_token IS NOT NULL)"
     t.index ["jti"], name: "index_users_on_jti", unique: true, where: "(jti IS NOT NULL)"
     t.index ["user_type"], name: "index_users_on_user_type"
-    t.check_constraint "user_type::text = ANY (ARRAY['operator'::character varying, 'enterprise'::character varying]::text[])", name: "users_user_type_check"
+    t.check_constraint "user_type::text = ANY (ARRAY['operator'::character varying::text, 'enterprise'::character varying::text])", name: "users_user_type_check"
   end
 
   create_table "verification_badges", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1096,6 +1096,66 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_17_000003) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["key"], name: "index_verification_badges_on_key", unique: true
+  end
+
+  create_table "webhook_attempts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "webhook_delivery_id", null: false
+    t.integer "attempt_number", null: false
+    t.integer "response_status_code"
+    t.text "response_body"
+    t.jsonb "response_headers", default: {}
+    t.float "duration_ms"
+    t.string "error_class", limit: 255
+    t.text "error_message"
+    t.string "status", limit: 24, null: false
+    t.datetime "attempted_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["webhook_delivery_id", "attempt_number"], name: "idx_on_webhook_delivery_id_attempt_number_d248c91b6b", unique: true
+    t.index ["webhook_delivery_id"], name: "index_webhook_attempts_on_webhook_delivery_id"
+    t.check_constraint "status::text = ANY (ARRAY['succeeded'::character varying, 'failed'::character varying]::text[])", name: "webhook_attempts_status_check"
+  end
+
+  create_table "webhook_deliveries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "webhook_endpoint_id", null: false
+    t.uuid "organization_id", null: false
+    t.string "event_type", limit: 120, null: false
+    t.string "event_id", limit: 120, null: false
+    t.jsonb "payload", default: {}, null: false
+    t.string "status", limit: 24, default: "pending", null: false
+    t.integer "attempts_count", default: 0, null: false
+    t.datetime "next_retry_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_webhook_deliveries_on_event_id"
+    t.index ["organization_id", "created_at"], name: "index_webhook_deliveries_on_organization_id_and_created_at"
+    t.index ["organization_id"], name: "index_webhook_deliveries_on_organization_id"
+    t.index ["status", "next_retry_at"], name: "index_webhook_deliveries_on_status_and_next_retry_at"
+    t.index ["webhook_endpoint_id", "event_id"], name: "idx_webhook_deliveries_endpoint_event_unique", unique: true
+    t.index ["webhook_endpoint_id", "status"], name: "index_webhook_deliveries_on_webhook_endpoint_id_and_status"
+    t.index ["webhook_endpoint_id"], name: "index_webhook_deliveries_on_webhook_endpoint_id"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'delivering'::character varying, 'succeeded'::character varying, 'failed'::character varying]::text[])", name: "webhook_deliveries_status_check"
+  end
+
+  create_table "webhook_endpoints", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "organization_id", null: false
+    t.uuid "created_by_id"
+    t.string "url", limit: 2048, null: false
+    t.string "description", limit: 255
+    t.string "secret_key", limit: 128, null: false
+    t.jsonb "events", default: [], null: false
+    t.string "status", limit: 24, default: "active", null: false
+    t.datetime "disabled_at"
+    t.datetime "last_successful_delivery_at"
+    t.datetime "last_failed_delivery_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_webhook_endpoints_on_created_by_id"
+    t.index ["organization_id", "status"], name: "index_webhook_endpoints_on_organization_id_and_status"
+    t.index ["organization_id"], name: "index_webhook_endpoints_on_organization_id"
+    t.index ["status"], name: "index_webhook_endpoints_on_status"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'disabled'::character varying, 'failed'::character varying]::text[])", name: "webhook_endpoints_status_check"
   end
 
   add_foreign_key "banner_events", "banners"
@@ -1184,4 +1244,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_17_000003) do
   add_foreign_key "service_offerings", "service_categories"
   add_foreign_key "subscriptions", "organizations"
   add_foreign_key "subscriptions", "plans"
+  add_foreign_key "webhook_attempts", "webhook_deliveries", on_delete: :cascade
+  add_foreign_key "webhook_deliveries", "organizations"
+  add_foreign_key "webhook_deliveries", "webhook_endpoints", on_delete: :cascade
+  add_foreign_key "webhook_endpoints", "organizations"
+  add_foreign_key "webhook_endpoints", "users", column: "created_by_id"
 end

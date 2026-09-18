@@ -4,21 +4,20 @@ module Api
   module V1
     class MissionsController < BaseController
       def index
-        authorize authorize_context, Missions::Mission
-        scope = policy_scope(authorize_context, Missions::Mission)
+        authorize Missions::Mission
+        scope = policy_scope(Missions::Mission)
         missions = scope.order(updated_at: :desc).limit(params.fetch(:limit, 25).to_i.clamp(1, 100))
         render_data(missions.map { |m| serialize_summary(m) })
       end
 
       def show
         mission = find_mission
-        authorize authorize_context, mission
-        payload = Missions::WorkspaceQuery.call(mission: mission, organization: current_organization)
-        render_data(payload)
+        authorize mission
+        render_data(serialize_workspace(mission))
       end
 
       def create
-        authorize authorize_context, Missions::Mission
+        authorize Missions::Mission
         project = TenantScope.find!(Projects::Project, params.require(:project_id), organization: current_organization)
 
         result = Missions::Create.call(
@@ -42,7 +41,7 @@ module Api
 
       def publish
         mission = find_mission
-        authorize authorize_context, mission, :publish?
+        authorize mission, :publish?
 
         result = Missions::Publish.call(
           mission: mission,
@@ -87,20 +86,60 @@ module Api
           title: mission.title,
           status: mission.status,
           mission_type: mission.mission_type,
-          area_hectares: mission.area_hectares,
+          area_hectares: mission.area_hectares&.to_f,
           deadline_at: mission.deadline_at,
           published_at: mission.published_at,
-          version: mission.lock_version
+          version: mission.lock_version || 0
         }
       end
 
       def serialize_workspace(mission)
+        order = mission.order
+        operator = order&.operator_profile
         serialize_summary(mission).merge(
           description: mission.description,
+          priority: mission.priority,
+          preferred_start_at: mission.preferred_start_at,
+          completed_at: mission.completed_at,
+          currency: mission.currency,
+          estimated_budget_min: mission.estimated_budget_min&.to_f,
+          estimated_budget_max: mission.estimated_budget_max&.to_f,
           project_id: mission.project_id,
           geometry: mission.geometry,
           products: mission.mission_products.map { |p|
-            { data_product_id: p.data_product_id, quantity: p.quantity }
+            {
+              data_product_id: p.data_product_id,
+              quantity: p.quantity&.to_f || 1.0,
+              name: p.data_product&.name || "Product",
+              slug: p.data_product&.slug || "product"
+            }
+          },
+          quotes_summary: {
+            open_count: mission.quotes.where(status: %w[submitted updated]).count
+          },
+          order: order && {
+            id: order.id,
+            status: order.status,
+            payment_status: order.payment_status,
+            total: order.total&.to_f || 0.0,
+            currency: order.currency
+          },
+          operator: operator && {
+            slug: operator.slug,
+            name: operator.company_name,
+            verified: operator.verified?,
+            headline: operator.headline
+          },
+          deliverables: mission.deliverables.map { |d|
+            {
+              id: d.id,
+              title: d.title,
+              status: d.status,
+              version: d.version || 0,
+              data_product_id: d.data_product_id,
+              file_format: d.file_format,
+              download_ready: d.respond_to?(:download_ready?) ? d.download_ready? : true
+            }
           }
         )
       end

@@ -6,9 +6,9 @@ module Api
       class DashboardController < BaseController
         # GET /api/v1/enterprise/dashboard
         def show
-          orders = Orders::Order.where(customer_organization_id: current_organization.id)
-          missions = Missions::Mission.where(organization_id: current_organization.id)
-          profile = Enterprises::Profile.find_by(organization_id: current_organization.id)
+          orders = ::Orders::Order.where(customer_organization_id: current_organization.id)
+          missions = ::Missions::Mission.where(organization_id: current_organization.id)
+          profile = ::Enterprises::Profile.find_by(organization_id: current_organization.id)
 
           render_data({
             organization: organization_payload,
@@ -57,11 +57,11 @@ module Api
         end
 
         def recent_notifications
-          Notification.where(user_id: current_user.id)
-                      .where("organization_id IS NULL OR organization_id = ?", current_organization.id)
-                      .recent
-                      .limit(5)
-                      .map do |notification|
+          ::Notification.where(user_id: current_user.id)
+                        .where("organization_id IS NULL OR organization_id = ?", current_organization.id)
+                        .recent
+                        .limit(5)
+                        .map do |notification|
             {
               id: notification.id,
               title: notification.title,

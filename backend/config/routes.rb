@@ -135,6 +135,12 @@ Rails.application.routes.draw do
           end
         end
         resources :invoices, only: %i[index]
+        resources :webhooks do
+          member do
+            post :ping
+            get :deliveries
+          end
+        end
       end
 
       resources :projects do

@@ -285,7 +285,7 @@ module Api
             status: m.status,
             delivery_deadline: m.deadline_at&.iso8601,
             map_types: m.metadata["map_types"] || [],
-            estimated_area_hectares: m.area_hectares || m.metadata["estimated_area_hectares"] || 10.0,
+            estimated_area_hectares: (m.area_hectares || m.metadata["estimated_area_hectares"] || 10.0)&.to_f,
             created_at: m.created_at.iso8601,
             updated_at: m.updated_at.iso8601
           }
@@ -301,7 +301,7 @@ module Api
             map_types: m.metadata["map_types"] || [],
             location_map: m.geometry,
             specifications: m.metadata["specifications"] || {},
-            estimated_area_hectares: m.area_hectares || m.metadata["estimated_area_hectares"] || 10.0,
+            estimated_area_hectares: (m.area_hectares || m.metadata["estimated_area_hectares"] || 10.0)&.to_f,
             quotes_count: m.quotes.count,
             created_at: m.created_at.iso8601,
             updated_at: m.updated_at.iso8601,

@@ -17,6 +17,8 @@ class Organization < ApplicationRecord
   has_many :enterprise_api_keys, class_name: "Enterprises::ApiKey", dependent: :restrict_with_exception
   has_many :projects, class_name: "Projects::Project", dependent: :restrict_with_exception
   has_many :missions, class_name: "Missions::Mission", dependent: :restrict_with_exception
+  has_many :webhook_endpoints, dependent: :destroy
+  has_many :webhook_deliveries, dependent: :destroy
 
   has_many :organization_follows,
            foreign_key: :follower_organization_id,
