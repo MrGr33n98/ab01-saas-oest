@@ -19,5 +19,16 @@ module ActiveSupport
         status: "active"
       )
     end
+
+    def generate_token_for(user)
+      body = Base64.urlsafe_encode64({
+        sub: user.id,
+        jti: user.jti,
+        type: "access",
+        exp: 24.hours.from_now.to_i
+      }.to_json)
+      sig = Base64.urlsafe_encode64(OpenSSL::HMAC.digest("SHA256", ENV["JWT_SECRET"] || "dronehub-mvp-dev-secret-change-me", body))
+      "#{body}.#{sig}"
+    end
   end
 end

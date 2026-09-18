@@ -155,6 +155,7 @@ Rails.application.routes.draw do
           post :cancel
           get :timeline
           get :matches
+          get :candidates
         end
         resources :quotes, only: %i[index create]
         resource :geometry, only: %i[create update], controller: "mission_geometry"

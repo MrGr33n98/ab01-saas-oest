@@ -39,6 +39,14 @@ module Deliverables
           payload: { mission_id: mission.id, deliverable_id: deliverable.id },
           occurred_at: Time.current
         )
+        Telemetry::Collector.track(
+          "mission.completed",
+          organization: mission.organization,
+          actor: user,
+          entity: mission,
+          properties: { deliverable_id: deliverable.id },
+          source: "backend"
+        )
       end
       Result.new(success?: true, deliverable: deliverable.reload, mission: mission.reload, errors: [])
     end

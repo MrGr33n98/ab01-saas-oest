@@ -1,0 +1,26 @@
+{
+  "name": "@dronehub/mcp-adapter",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Canonical DroneHub MCP Adapter V1 (R0 Read / R1 Analyze) consuming Rails Domain Services",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2",
+    "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

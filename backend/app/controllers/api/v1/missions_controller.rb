@@ -66,6 +66,14 @@ module Api
         end
       end
 
+      def candidates
+        mission = find_mission
+        authorize mission, :show?
+        candidates = Matching::BuildCandidateSet.call(mission: mission)
+        render_data(candidates)
+      end
+      alias_method :matches, :candidates
+
       private
 
       def find_mission
