@@ -19,6 +19,8 @@ class Organization < ApplicationRecord
   has_many :missions, class_name: "Missions::Mission", dependent: :restrict_with_exception
   has_many :webhook_endpoints, dependent: :destroy
   has_many :webhook_deliveries, dependent: :destroy
+  has_many :telemetry_events, dependent: :nullify
+  has_many :daily_tenant_metrics, dependent: :destroy
 
   has_many :organization_follows,
            foreign_key: :follower_organization_id,

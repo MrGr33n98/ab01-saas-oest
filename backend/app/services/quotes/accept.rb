@@ -74,6 +74,24 @@ module Quotes
           occurred_at: Time.current
         )
 
+        Telemetry::Collector.track(
+          "quote.accepted",
+          organization: quote.customer_organization,
+          actor: user,
+          entity: quote,
+          properties: { mission_id: mission.id, total: quote.total },
+          source: "backend"
+        )
+
+        Telemetry::Collector.track(
+          "order.created",
+          organization: order.customer_organization,
+          actor: user,
+          entity: order,
+          properties: { mission_id: mission.id, total: order.total, currency: order.currency },
+          source: "backend"
+        )
+
         # Notify customer owners + operator org owners
         begin
           OrganizationMembership.where(organization_id: order.customer_organization_id, status: "active", role: %w[owner admin]).find_each do |m|

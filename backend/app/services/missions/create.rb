@@ -67,6 +67,14 @@ module Missions
         },
         occurred_at: Time.current
       )
+      Telemetry::Collector.track(
+        "mission.created",
+        organization: organization,
+        actor: user,
+        entity: mission,
+        properties: { project_id: project.id, mission_type: mission.mission_type },
+        source: "backend"
+      )
     end
   end
 end

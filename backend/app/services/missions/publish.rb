@@ -49,6 +49,14 @@ module Missions
           },
           occurred_at: Time.current
         )
+        Telemetry::Collector.track(
+          "mission.published",
+          organization: mission.organization,
+          actor: user,
+          entity: mission,
+          properties: { mission_type: mission.mission_type },
+          source: "backend"
+        )
       end
 
       Matching::EnqueueJob.perform_later(mission.id)

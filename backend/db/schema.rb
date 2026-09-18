@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_09_18_034000) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_18_035701) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -234,6 +234,30 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_18_034000) do
     t.datetime "updated_at", null: false
     t.index ["operator_profile_id"], name: "index_coverage_areas_on_operator_profile_id"
     t.index ["organization_id"], name: "index_coverage_areas_on_organization_id"
+  end
+
+  create_table "daily_platform_metrics", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.date "date", null: false
+    t.string "metric_name", null: false
+    t.bigint "value", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["date", "metric_name"], name: "idx_daily_platform_metrics_unique", unique: true
+    t.index ["metric_name", "date"], name: "index_daily_platform_metrics_on_metric_name_and_date"
+  end
+
+  create_table "daily_tenant_metrics", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "organization_id", null: false
+    t.date "date", null: false
+    t.string "metric_name", null: false
+    t.bigint "value", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["metric_name", "date"], name: "index_daily_tenant_metrics_on_metric_name_and_date"
+    t.index ["organization_id", "date", "metric_name"], name: "idx_daily_tenant_metrics_unique", unique: true
+    t.index ["organization_id"], name: "index_daily_tenant_metrics_on_organization_id"
   end
 
   create_table "data_products", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1058,6 +1082,30 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_18_034000) do
     t.index ["plan_id"], name: "index_subscriptions_on_plan_id"
   end
 
+  create_table "telemetry_events", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "organization_id"
+    t.string "actor_type"
+    t.uuid "actor_id"
+    t.string "session_id"
+    t.string "event_name", null: false
+    t.string "entity_type"
+    t.uuid "entity_id"
+    t.jsonb "properties", default: {}, null: false
+    t.datetime "occurred_at", null: false
+    t.datetime "received_at", null: false
+    t.string "request_id"
+    t.string "source", default: "web", null: false
+    t.integer "schema_version", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_type", "entity_id"], name: "index_telemetry_events_on_entity_type_and_entity_id"
+    t.index ["event_name", "occurred_at"], name: "index_telemetry_events_on_event_name_and_occurred_at"
+    t.index ["occurred_at"], name: "index_telemetry_events_on_occurred_at"
+    t.index ["organization_id", "occurred_at"], name: "index_telemetry_events_on_organization_id_and_occurred_at"
+    t.index ["organization_id"], name: "index_telemetry_events_on_organization_id"
+    t.index ["request_id", "event_name"], name: "idx_telemetry_events_idempotency", unique: true, where: "(request_id IS NOT NULL)"
+  end
+
   create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "first_name", limit: 100
     t.string "last_name", limit: 100
@@ -1169,6 +1217,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_18_034000) do
   add_foreign_key "category_use_cases", "service_categories"
   add_foreign_key "coverage_areas", "operator_profiles"
   add_foreign_key "coverage_areas", "organizations"
+  add_foreign_key "daily_tenant_metrics", "organizations", on_delete: :cascade
   add_foreign_key "deliverables", "data_products"
   add_foreign_key "deliverables", "missions"
   add_foreign_key "deliverables", "organizations"
@@ -1244,6 +1293,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_18_034000) do
   add_foreign_key "service_offerings", "service_categories"
   add_foreign_key "subscriptions", "organizations"
   add_foreign_key "subscriptions", "plans"
+  add_foreign_key "telemetry_events", "organizations", on_delete: :nullify
   add_foreign_key "webhook_attempts", "webhook_deliveries", on_delete: :cascade
   add_foreign_key "webhook_deliveries", "organizations"
   add_foreign_key "webhook_deliveries", "webhook_endpoints", on_delete: :cascade

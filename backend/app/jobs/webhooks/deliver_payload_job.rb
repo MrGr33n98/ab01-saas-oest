@@ -77,11 +77,32 @@ module Webhooks
 
       if success
         delivery.mark_succeeded!
+        Telemetry::Collector.track(
+          "webhook.delivery_succeeded",
+          organization: delivery.organization,
+          entity: delivery,
+          properties: { status_code: response.code.to_i, duration_ms: duration_ms },
+          source: "webhook_worker"
+        )
       else
+        Telemetry::Collector.track(
+          "webhook.delivery_failed",
+          organization: delivery.organization,
+          entity: delivery,
+          properties: { status_code: response.code.to_i, attempt: attempt_number },
+          source: "webhook_worker"
+        )
         handle_retry_or_fail(delivery, attempt_number, "HTTP #{response.code}")
       end
     rescue StandardError => e
       duration_ms = 0
+      Telemetry::Collector.track(
+        "webhook.delivery_failed",
+        organization: delivery&.organization,
+        entity: delivery,
+        properties: { error_class: e.class.name, error_message: e.message.truncate(200), attempt: attempt_number },
+        source: "webhook_worker"
+      )
       record_attempt(
         delivery: delivery,
         attempt_number: attempt_number,

@@ -216,6 +216,12 @@ Rails.application.routes.draw do
         end
       end
 
+      namespace :analytics do
+        get :overview
+        get :funnel
+        get :webhooks
+      end
+
       namespace :content do
         resources :posts, only: %i[index show], param: :slug
       end
