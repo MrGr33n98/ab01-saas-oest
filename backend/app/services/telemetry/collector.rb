@@ -17,7 +17,7 @@ module Telemetry
     end
 
     def track(event_name:, organization: nil, actor: nil, entity: nil, properties: {}, occurred_at: nil, request_id: nil, source: "web", async: true)
-      sanitized_properties = Sanitizer.sanitize_properties(properties)
+      sanitized_properties = EventSchema.sanitize(event_name, properties)
       occurred_time = occurred_at || Time.current
 
       payload = {

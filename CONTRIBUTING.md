@@ -47,7 +47,7 @@ Utilizamos a convenção [Conventional Commits v1.0.0](https://www.conventionalc
 
 Antes de abrir um Pull Request, certifique-se de que todos os gates locais passem com 100% de sucesso:
 
-### Backend (Rails 7.2)
+### Backend (Rails 8.0.5)
 ```bash
 cd backend
 bundle exec rubocop          # Linter e padrões de estilo Ruby

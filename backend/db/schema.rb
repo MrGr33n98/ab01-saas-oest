@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_09_18_035701) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_19_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -359,7 +359,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_18_035701) do
     t.index ["organization_id"], name: "index_enterprise_api_keys_on_organization_id"
     t.index ["prefix"], name: "index_enterprise_api_keys_on_prefix", unique: true, where: "(prefix IS NOT NULL)"
     t.index ["requested_by_id"], name: "index_enterprise_api_keys_on_requested_by_id"
-    t.check_constraint "status::text = ANY (ARRAY['requested'::character varying::text, 'approved'::character varying::text, 'active'::character varying::text, 'revoked'::character varying::text, 'cancelled'::character varying::text])", name: "enterprise_api_keys_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['requested'::character varying, 'approved'::character varying, 'active'::character varying, 'revoked'::character varying, 'cancelled'::character varying]::text[])", name: "enterprise_api_keys_status_check"
   end
 
   create_table "enterprise_profiles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1129,7 +1129,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_18_035701) do
     t.index ["email_verification_token"], name: "index_users_on_email_verification_token", unique: true, where: "(email_verification_token IS NOT NULL)"
     t.index ["jti"], name: "index_users_on_jti", unique: true, where: "(jti IS NOT NULL)"
     t.index ["user_type"], name: "index_users_on_user_type"
-    t.check_constraint "user_type::text = ANY (ARRAY['operator'::character varying::text, 'enterprise'::character varying::text])", name: "users_user_type_check"
+    t.check_constraint "user_type::text = ANY (ARRAY['operator'::character varying, 'enterprise'::character varying]::text[])", name: "users_user_type_check"
   end
 
   create_table "verification_badges", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

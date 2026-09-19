@@ -21,7 +21,8 @@ module Api
         ActiveRecord::Base.transaction do
           user = User.create!(
             email: email,
-            encrypted_password: hash_password(password),
+            password: password,
+            password_confirmation: password,
             first_name: params[:first_name],
             last_name: params[:last_name],
             accepted_terms_at: Time.current,
@@ -78,7 +79,7 @@ module Api
       # POST /api/v1/auth/sign_in
       def sign_in
         user = User.find_by(email: params.require(:email).to_s.downcase.strip)
-        unless user && password_match?(user, params.require(:password))
+        unless user&.valid_password?(params.require(:password))
           return render_error(401, "INVALID_CREDENTIALS", "Invalid email or password")
         end
 
@@ -136,7 +137,7 @@ module Api
         password = params.require(:password)
         return render_error(422, "WEAK_PASSWORD", "Senha deve ter ao menos 8 caracteres") if password.to_s.length < 8
 
-        user.update!(encrypted_password: hash_password(password), jti: SecureRandom.uuid)
+        user.update!(password: password, password_confirmation: password, jti: SecureRandom.uuid)
         render json: {
           data: { message: "Senha atualizada. Faça login." },
           meta: { request_id: @request_id }
@@ -211,25 +212,6 @@ module Api
       def set_request_id
         @request_id = request.headers["X-Request-Id"].presence || SecureRandom.uuid
         response.set_header("X-Request-Id", @request_id)
-      end
-
-      def hash_password(password)
-        # MVP: use bcrypt if available, else SHA256 with salt marker (replace with Devise in production boot)
-        if defined?(BCrypt)
-          BCrypt::Password.create(password)
-        else
-          "sha256:#{Digest::SHA256.hexdigest("dronehub-mvp-#{password}")}"
-        end
-      end
-
-      def password_match?(user, password)
-        if user.encrypted_password.start_with?("sha256:")
-          user.encrypted_password == hash_password(password)
-        elsif defined?(BCrypt)
-          BCrypt::Password.new(user.encrypted_password) == password
-        else
-          false
-        end
       end
 
       def issue_tokens(user)

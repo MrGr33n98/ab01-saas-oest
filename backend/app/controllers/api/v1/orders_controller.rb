@@ -4,8 +4,8 @@ module Api
   module V1
     class OrdersController < BaseController
       def index
-        authorize authorize_context, Orders::Order
-        orders = policy_scope(authorize_context, Orders::Order).order(created_at: :desc).limit(50)
+        authorize authorize_context, ::Orders::Order
+        orders = policy_scope(authorize_context, ::Orders::Order).order(created_at: :desc).limit(50)
         render_data(orders.map { |o| serialize(o) })
       end
 

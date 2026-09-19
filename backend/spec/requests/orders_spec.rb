@@ -15,7 +15,7 @@ RSpec.describe "Orders API", type: :request do
   let!(:user) do
     User.create!(
       email: "order.client@dronehub.com.br",
-      encrypted_password: "sha256:#{Digest::SHA256.hexdigest('pass')}",
+      password: "Password123!", password_confirmation: "Password123!",
       jti: SecureRandom.uuid, platform_role: "user", status: "active"
     )
   end
@@ -41,9 +41,31 @@ RSpec.describe "Orders API", type: :request do
     )
   end
 
+  let!(:operator_profile) do
+    Operators::OperatorProfile.create!(
+      organization: org,
+      slug: "order-operator-#{SecureRandom.hex(4)}",
+      verification_status: "verified",
+      accepting_jobs: true
+    )
+  end
+
+  let!(:quote) do
+    Quotes::Quote.create!(
+      mission: mission,
+      customer_organization: org,
+      operator_organization: org,
+      operator_profile: operator_profile,
+      submitted_by: user,
+      status: "accepted",
+      currency: "BRL"
+    )
+  end
+
   let!(:order) do
     Orders::Order.create!(
       mission_id: mission.id,
+      quote: quote,
       customer_organization_id: org.id,
       operator_organization_id: org.id,
       status: "pending_payment",

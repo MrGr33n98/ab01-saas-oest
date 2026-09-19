@@ -13,6 +13,9 @@ require "sprockets/railtie"
 
 Bundler.require(*Rails.groups)
 
+module Integrations
+end
+
 module Dronehub
   class Application < Rails::Application
     config.load_defaults 7.2
@@ -36,9 +39,11 @@ module Dronehub
       #{config.root}/app/queries
       #{config.root}/app/events
       #{config.root}/app/subscribers
-      #{config.root}/app/integrations
       #{config.root}/lib
     ]
+
+    initializer "dronehub.integrations_namespace" do
+      Rails.autoloaders.main.push_dir(config.root.join("app/integrations"), namespace: Integrations)
+    end
   end
 end
-

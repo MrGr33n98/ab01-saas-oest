@@ -98,7 +98,7 @@ Rails.application.routes.draw do
         resources :services
         resources :data_products
         resources :coverage_areas
-        resources :portfolio, controller: "operator_portfolio", only: %i[index create update destroy]
+        resources :portfolio, controller: "/api/v1/operator_portfolio", only: %i[index create update destroy]
         resource :data_intent_config, controller: "operator_data_intent", only: %i[show update]
         resources :lead_inquiries, controller: "operator_data_intent", only: %i[index update]
         get "jobs", to: "jobs#index"

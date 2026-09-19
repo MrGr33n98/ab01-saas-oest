@@ -15,7 +15,7 @@ RSpec.describe "Operator Portfolio API", type: :request do
   let!(:op_user) do
     User.create!(
       email: "portfolio.op@dronehub.com.br",
-      encrypted_password: "sha256:#{Digest::SHA256.hexdigest('pass')}",
+      password: "Password123!", password_confirmation: "Password123!",
       jti: SecureRandom.uuid, platform_role: "user", status: "active"
     )
   end
@@ -65,7 +65,7 @@ RSpec.describe "Operator Portfolio API", type: :request do
       expect(response).to have_http_status(:created)
       json = JSON.parse(response.body)
       expect(json["data"]["title"]).to eq("Levantamento Usina Solar 50MW")
-      expect(json["data"]["item_type"]).to eq("before_after")
+      expect(json["data"]["itemType"]).to eq("before_after")
       expect(operator_profile.portfolio_items.count).to eq(1)
     end
   end

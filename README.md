@@ -235,7 +235,7 @@ Acesse o sistema em: **[http://localhost:3000](http://localhost:3000)**
 Mantemos padrões estritos de qualidade de código e conformidade de segurança:
 
 ```bash
-# === Backend (Rails 7.2) ===
+# === Backend (Rails 8.0.5) ===
 cd backend
 bundle exec rspec              # Suite completa de testes automatizados
 bundle exec rubocop            # Linter e análise de código
@@ -249,6 +249,9 @@ npm run typecheck              # Verificação estrita de tipos TypeScript
 npm run lint                   # Linter Next.js e ESLint 9
 npm run build                  # Build de validação para produção
 ```
+
+O comando local canônico, independente do Ruby instalado na máquina, está em
+[docs/testing.md](docs/testing.md).
 
 ---
 

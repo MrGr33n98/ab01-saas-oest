@@ -23,7 +23,8 @@ RSpec.describe "Enterprise tenant workspace", type: :request do
   def create_context!(user_type:, organization_type:)
     user = User.create!(
       email: "#{user_type}-#{SecureRandom.hex(6)}@example.com",
-      encrypted_password: "sha256:test",
+      password: "Password123!",
+      password_confirmation: "Password123!",
       jti: SecureRandom.uuid,
       user_type: user_type,
       platform_role: "user",
@@ -98,7 +99,8 @@ RSpec.describe "Enterprise tenant workspace", type: :request do
     )
     admin = User.create!(
       email: "admin-#{SecureRandom.hex(5)}@example.com",
-      encrypted_password: "sha256:test",
+      password: "Password123!",
+      password_confirmation: "Password123!",
       jti: SecureRandom.uuid,
       user_type: "enterprise",
       platform_role: "admin",

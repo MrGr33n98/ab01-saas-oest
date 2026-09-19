@@ -16,13 +16,28 @@ module Telemetry
       auth_token
       bearer
     ].freeze
+    PII_KEY_FRAGMENTS = %w[
+      email
+      phone
+      telephone
+      mobile
+      cpf
+      cnpj
+      address
+      full_name
+      first_name
+      last_name
+      ip_address
+      cookie
+      session
+    ].freeze
 
     def self.sanitize_properties(properties)
       return {} unless properties.is_a?(Hash)
 
       properties.each_with_object({}) do |(key, value), acc|
         normalized_key = key.to_s.downcase
-        next if BLOCKED_KEYS.any? { |blocked| normalized_key.include?(blocked) }
+        next if prohibited_key?(normalized_key)
 
         acc[key.to_s] = sanitize_value(value)
       end
@@ -41,6 +56,10 @@ module Telemetry
       else
         value.to_s.truncate(500)
       end
+    end
+
+    def self.prohibited_key?(key)
+      (BLOCKED_KEYS + PII_KEY_FRAGMENTS).any? { |fragment| key.include?(fragment) }
     end
   end
 end

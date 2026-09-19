@@ -15,7 +15,7 @@ RSpec.describe "Operator Follows API", type: :request do
   let!(:client_user) do
     User.create!(
       email: "follow.client@dronehub.com.br",
-      encrypted_password: "sha256:#{Digest::SHA256.hexdigest('pass')}",
+      password: "Password123!", password_confirmation: "Password123!",
       jti: SecureRandom.uuid, platform_role: "user", status: "active"
     )
   end
@@ -33,7 +33,7 @@ RSpec.describe "Operator Follows API", type: :request do
   let!(:op_user) do
     User.create!(
       email: "follow.operator@dronehub.com.br",
-      encrypted_password: "sha256:#{Digest::SHA256.hexdigest('pass')}",
+      password: "Password123!", password_confirmation: "Password123!",
       jti: SecureRandom.uuid, platform_role: "user", status: "active"
     )
   end

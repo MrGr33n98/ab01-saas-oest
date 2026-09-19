@@ -15,7 +15,7 @@ RSpec.describe "Missions API", type: :request do
   let!(:user) do
     User.create!(
       email: "mission.client@dronehub.com.br",
-      encrypted_password: "sha256:#{Digest::SHA256.hexdigest('pass')}",
+      password: "Password123!", password_confirmation: "Password123!",
       jti: SecureRandom.uuid,
       platform_role: "user",
       status: "active"

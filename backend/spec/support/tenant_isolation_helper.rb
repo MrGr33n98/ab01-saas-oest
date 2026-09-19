@@ -4,7 +4,8 @@ module TenantIsolationHelper
   def create_org_user!(type: "customer", role: "owner")
     user = User.create!(
       email: "u-#{SecureRandom.hex(4)}@example.com",
-      encrypted_password: "sha256:#{Digest::SHA256.hexdigest('dronehub-mvp-password')}",
+      password: "Password123!",
+      password_confirmation: "Password123!",
       jti: SecureRandom.uuid
     )
     org = Organization.create!(

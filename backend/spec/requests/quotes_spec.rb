@@ -15,7 +15,7 @@ RSpec.describe "Quotes API", type: :request do
   let!(:client_user) do
     User.create!(
       email: "quote.client@dronehub.com.br",
-      encrypted_password: "sha256:#{Digest::SHA256.hexdigest('pass')}",
+      password: "Password123!", password_confirmation: "Password123!",
       jti: SecureRandom.uuid, platform_role: "user", status: "active"
     )
   end
@@ -44,7 +44,7 @@ RSpec.describe "Quotes API", type: :request do
   let!(:operator_user) do
     User.create!(
       email: "quote.operator@dronehub.com.br",
-      encrypted_password: "sha256:#{Digest::SHA256.hexdigest('pass')}",
+      password: "Password123!", password_confirmation: "Password123!",
       jti: SecureRandom.uuid, platform_role: "user", status: "active"
     )
   end

@@ -56,6 +56,10 @@ jobs:
           bundler-cache: true
           working-directory: backend
 
+      - name: Bundle install (locked)
+        working-directory: backend
+        run: bundle install --jobs 4 --retry 3
+
       - name: Boot check
         working-directory: backend
         env:
@@ -80,6 +84,57 @@ jobs:
           ALLOW_DEV_AUTH: "false"
         run: bundle exec rails db:prepare
 
+      - name: Database migration contract
+        working-directory: backend
+        env:
+          DATABASE_URL: postgis://dronehub:dronehub@localhost:5432/dronehub_test
+          REDIS_URL: redis://localhost:6379/0
+          RAILS_ENV: test
+          JWT_SECRET: ci-test-secret-minimum-32-chars-ok
+          ALLOW_DEV_AUTH: "false"
+        run: bundle exec rails db:abort_if_pending_migrations
+
+      - name: Zeitwerk check
+        working-directory: backend
+        env:
+          DATABASE_URL: postgis://dronehub:dronehub@localhost:5432/dronehub_test
+          REDIS_URL: redis://localhost:6379/0
+          RAILS_ENV: test
+          JWT_SECRET: ci-test-secret-minimum-32-chars-ok
+          ALLOW_DEV_AUTH: "false"
+        run: bundle exec rails zeitwerk:check
+
+      - name: SaaS operational contracts
+        working-directory: backend
+        env:
+          DATABASE_URL: postgis://dronehub:dronehub@localhost:5432/dronehub_test
+          REDIS_URL: redis://localhost:6379/0
+          RAILS_ENV: test
+          JWT_SECRET: ci-test-secret-minimum-32-chars-ok
+          ALLOW_DEV_AUTH: "false"
+        run: >
+          bundle exec rspec
+          spec/requests/health_spec.rb
+          spec/models/audit_log_spec.rb
+          spec/services/telemetry/event_schema_spec.rb
+          spec/requests/enterprise_orders_spec.rb
+
+      - name: Security and tenancy contracts
+        working-directory: backend
+        env:
+          DATABASE_URL: postgis://dronehub:dronehub@localhost:5432/dronehub_test
+          REDIS_URL: redis://localhost:6379/0
+          RAILS_ENV: test
+          JWT_SECRET: ci-test-secret-minimum-32-chars-ok
+          ALLOW_DEV_AUTH: "false"
+        run: >
+          bundle exec rails test
+          test/controllers/webhooks_controller_test.rb
+          test/jobs/deliver_payload_job_test.rb
+          test/policies/webhook_endpoint_policy_test.rb
+          test/services/webhooks_test.rb
+          test/controllers/api/v1/missions_candidates_test.rb
+
       - name: RSpec (gate)
         working-directory: backend
         env:
@@ -99,9 +154,7 @@ jobs:
 
       - name: Brakeman security scan (gate)
         working-directory: backend
-        run: |
-          gem install brakeman --no-document
-          brakeman --no-pager --exit-on-warn -q
+        run: bundle exec brakeman --no-pager --exit-on-warn -q
 
       - name: Bundle audit (CVE check)
         working-directory: backend
@@ -158,3 +211,21 @@ jobs:
           else
             echo "OpenAPI spec found OK"
           fi
+
+  mcp-adapter-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: packages/dronehub-mcp-adapter/pnpm-lock.yaml
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install MCP adapter dependencies
+        working-directory: packages/dronehub-mcp-adapter
+        run: pnpm install --frozen-lockfile
+      - name: MCP adapter contracts and tenant security
+        working-directory: packages/dronehub-mcp-adapter
+        run: pnpm test

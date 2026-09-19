@@ -18,7 +18,10 @@ module Operators
     has_many :verification_badges, through: :operator_badges
     has_many :operator_materials, class_name: "Operators::OperatorMaterial", dependent: :destroy
     has_many :quote_requests, class_name: "QuoteRequest", dependent: :destroy
-    has_many :drones, class_name: "Operators::Drone", dependent: :destroy
+    has_many :drones,
+             class_name: "Operators::Drone",
+             foreign_key: :organization_id,
+             primary_key: :organization_id
     has_many :pilots, class_name: "Operators::Pilot", dependent: :destroy
     has_many :reviews, class_name: "Reviews::Review", dependent: :restrict_with_exception
 

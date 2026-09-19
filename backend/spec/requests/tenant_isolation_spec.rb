@@ -24,7 +24,8 @@ RSpec.describe "Tenant isolation", type: :request do
   def create_tenant!(type: "customer", role: "owner")
     user = User.create!(
       email: "iso-#{SecureRandom.hex(6)}@example.com",
-      encrypted_password: "sha256:#{Digest::SHA256.hexdigest('dronehub-mvp-password')}",
+      password: "Password123!",
+      password_confirmation: "Password123!",
       jti: SecureRandom.uuid,
       platform_role: "user",
       status: "active",

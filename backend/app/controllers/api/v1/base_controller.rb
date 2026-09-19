@@ -145,9 +145,61 @@ module Api
         authorize_context
       end
 
+      def authorize(*arguments, policy_class: nil)
+        record, query = authorization_arguments(arguments)
+        super(record, query, policy_class: policy_class)
+      end
+
+      def policy_scope(*arguments, policy_scope_class: nil)
+        scope = policy_scope_arguments(arguments)
+        super(scope, policy_scope_class: policy_scope_class)
+      end
+
       def set_request_id
         @request_id = request.headers["X-Request-Id"].presence || SecureRandom.uuid
         response.set_header("X-Request-Id", @request_id)
+      end
+
+      def authorization_arguments(arguments)
+        case arguments.length
+        when 1
+          arguments
+        when 2
+          context, record = arguments
+          return arguments unless authorization_context?(context)
+
+          validate_authorization_context!(context)
+          [record, nil]
+        when 3
+          context, record, query = arguments
+          validate_authorization_context!(context)
+          [record, query]
+        else
+          raise ArgumentError, "authorize expects a record and optional query"
+        end
+      end
+
+      def policy_scope_arguments(arguments)
+        return arguments.first if arguments.length == 1
+
+        if arguments.length == 2
+          context, scope = arguments
+          validate_authorization_context!(context)
+          return scope
+        end
+
+        raise ArgumentError, "policy_scope expects a scope"
+      end
+
+      def validate_authorization_context!(context)
+        return if authorization_context?(context) && context.user == current_user &&
+                  context.organization == current_organization
+
+        raise Pundit::NotAuthorizedError, "Authorization context does not match the current tenant"
+      end
+
+      def authorization_context?(context)
+        context.respond_to?(:user) && context.respond_to?(:organization)
       end
 
       def render_data(data, status: :ok, meta: {})

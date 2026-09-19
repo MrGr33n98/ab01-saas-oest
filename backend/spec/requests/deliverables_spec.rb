@@ -15,7 +15,7 @@ RSpec.describe "Deliverables API", type: :request do
   let!(:user) do
     User.create!(
       email: "deliv.client@dronehub.com.br",
-      encrypted_password: "sha256:#{Digest::SHA256.hexdigest('pass')}",
+      password: "Password123!", password_confirmation: "Password123!",
       jti: SecureRandom.uuid, platform_role: "user", status: "active"
     )
   end
@@ -41,11 +41,22 @@ RSpec.describe "Deliverables API", type: :request do
     )
   end
 
+  let!(:data_product) do
+    Marketplace::DataProduct.create!(
+      slug: "orthomosaic-#{SecureRandom.hex(4)}",
+      name: "Orthomosaic",
+      product_type: "raster"
+    )
+  end
+
   let!(:deliverable) do
     Deliverables::Deliverable.create!(
+      organization: org,
       mission_id: mission.id,
+      data_product: data_product,
+      uploaded_by: user,
       title: "Ortomosaico RGB Final",
-      status: "uploaded",
+      status: "available",
       version: 1,
       storage_key: "missions/#{mission.id}/ortho.tif",
       file_size_bytes: 104857600

@@ -23,7 +23,8 @@ RSpec.describe "Operator vertical", type: :request do
   def operator_context!
     user = User.create!(
       email: "operator-#{SecureRandom.hex(6)}@example.com",
-      encrypted_password: "sha256:test",
+      password: "Password123!",
+      password_confirmation: "Password123!",
       jti: SecureRandom.uuid,
       user_type: "operator",
       platform_role: "user",
@@ -152,7 +153,8 @@ RSpec.describe "Operator vertical", type: :request do
   it "rejects an enterprise context from every operator-only endpoint" do
     user = User.create!(
       email: "enterprise-#{SecureRandom.hex(6)}@example.com",
-      encrypted_password: "sha256:test",
+      password: "Password123!",
+      password_confirmation: "Password123!",
       jti: SecureRandom.uuid,
       user_type: "enterprise",
       platform_role: "user",

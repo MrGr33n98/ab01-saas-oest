@@ -1,0 +1,13 @@
+FROM ruby:3.2.2-slim
+
+WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends build-essential libpq-dev git \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY Gemfile Gemfile.lock ./
+RUN bundle config set path /usr/local/bundle \
+  && bundle install --jobs 4 --retry 3
+
+COPY . .
